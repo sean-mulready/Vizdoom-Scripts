@@ -1,0 +1,4 @@
+# welche Dateien ignoriert werden sollen
+
+*.csv
+*.txt
