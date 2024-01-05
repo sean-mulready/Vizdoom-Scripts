@@ -5,11 +5,11 @@ import time
 import numpy as np
 
 # Enter Subject Data
-sub_id = "aaabe"
+sub_id = "Ziege"
 
 # define a number of blocks to write a file after each block so in case
 # the game crashes for any reason, not all data is lost
-blocks = 1
+blocks = 2
 for b in range(blocks):
 
     game = vzd.DoomGame()
@@ -51,12 +51,8 @@ for b in range(blocks):
 
     # Define a translation function for the last action
     def translate_action(last_action):
-        
-        
+       
         last_action_trnsl = "NA"
-
-    
-                
         #scenario basic
                 
         if last_action == [1.0,0.0,0.0]:
@@ -74,9 +70,9 @@ for b in range(blocks):
         for o in object_list:
             if o.id == object_id and o.name != object_name:
                 return o
-        return None
+        #return None
 
-
+    
 
     # Specify how many Episodes 
     episodes = 10
@@ -110,10 +106,10 @@ for b in range(blocks):
                 ]
 
     
-    # Open a single CSV file to store all episode data
+    # Open a  CSV file to store episode-data of each block
     
-    episode_filename = sub_id + "_game_data_block_"+ str(b+1) +".csv"
-    with open(episode_filename,'w', newline='') as starting_file:
+    block_filename = sub_id + "_game_data_block_"+ str(b+1) +".csv"
+    with open(block_filename,'w', newline='') as starting_file:
         csv_writer = csv.writer(starting_file)
         csv_writer.writerow(columns)
         
@@ -133,10 +129,8 @@ for b in range(blocks):
     #Use a set to keep track of uniqueobject IDs
     unique_object_ids = set()
 
-        
-
     # create a dictionary to store mapping between object ID and column index
-    object_id_to_column_index = {}
+    #object_id_to_column_index = {}
 
     #create single column arrays for each variable to later concatenate into a dataframe
     Episode_arr = np.full((episodes*151,1), np.nan, dtype = np.int32)
@@ -202,10 +196,12 @@ for b in range(blocks):
             
             cumulative_reward += reward  # Update cumulative reward
             current_time = time.time() - start_time
+            
             object_ids = []
             for o in state.objects:
                 object_ids.append(o.id)
-            unique_object_ids.update(object_ids)
+                unique_object_ids.update(object_ids)
+             
             
             # Collect data for each time step within the episode so for each array
             Episode_arr[current_index] = i+1
@@ -223,39 +219,48 @@ for b in range(blocks):
             Time_arr[current_index] = current_time
             
             
+            # Erfasse Daten für das Cacodemon (Objekt-ID 0)
             for object_id in unique_object_ids:
-                object_data = find_object_data(state.objects,object_id,"DoomPlayer")
-                if object_data is not None and object_data.name == "Cacodemon":
-
+                if object_id == 0:
+                    object_data = find_object_data(state.objects, object_id, "DoomPlayer")
+                if object_data is not None:
+            # Speichere Daten für das Cacodemon
                     ObjID_arr[current_index] = object_data.id
-                    Objname_arr[current_index] =  object_data.name
-                    Objx_arr[current_index] =     object_data.position_x 
-                    Objy_arr[current_index] =     object_data.position_y
-                    Objz_arr[current_index] =     object_data.position_z
-                    Objang_arr[current_index] =  object_data.angle
-
-                elif object_data is not None:
-                    AppobjID_arr[current_index] = object_data.id
-                    Appobjname_arr[current_index] =  object_data.name
-                    Appobjx_arr[current_index] =   object_data.position_x
-                    Appobjy_arr[current_index] =  object_data.position_y 
-                    Appobjz_arr[current_index] =   object_data.position_z
-                    Appobjangle_arr[current_index] =  object_data.angle
-                
+                    Objname_arr[current_index] = object_data.name
+                    Objx_arr[current_index] = object_data.position_x 
+                    Objy_arr[current_index] = object_data.position_y
+                    Objz_arr[current_index] = object_data.position_z
+                    Objang_arr[current_index] = object_data.angle
                 else:
+            # Setze die Werte auf Standard, wenn keine Daten gefunden wurden
                     ObjID_arr[current_index] = 0
-                    Objname_arr[current_index] =  "None"
-                    Objx_arr[current_index] =     0
-                    Objy_arr[current_index] =     0
-                    Objz_arr[current_index] =    0
-                    Objang_arr[current_index] =   0
+                    Objname_arr[current_index] = "None"
+                    Objx_arr[current_index] = 0
+                    Objy_arr[current_index] = 0
+                    Objz_arr[current_index] = 0
+                    Objang_arr[current_index] = 0
+
+            # Erfasse Daten für andere Objekte (außer dem Cacodemon)
+            for object_id in unique_object_ids:
+                if object_id != 0:
+                    object_data = find_object_data(state.objects, object_id, "DoomPlayer")
+                if object_data is not None:
+            # Speichere Daten für andere Objekte
+                    AppobjID_arr[current_index] = object_data.id
+                    Appobjname_arr[current_index] = object_data.name
+                    Appobjx_arr[current_index] = object_data.position_x
+                    Appobjy_arr[current_index] = object_data.position_y 
+                    Appobjz_arr[current_index] = object_data.position_z
+                    Appobjangle_arr[current_index] = object_data.angle
+                else:
+            # Setze die Werte auf Standard, wenn keine Daten gefunden wurden
                     AppobjID_arr[current_index] = 0
-                    Appobjname_arr[current_index] =  "None"
-                    Appobjx_arr[current_index] =     0 
-                    Appobjy_arr[current_index] =     0
-                    Appobjz_arr[current_index] =     0
-                    Appobjangle_arr[current_index] =   0
-                
+                    Appobjname_arr[current_index] = "None"
+                    Appobjx_arr[current_index] = 0 
+                    Appobjy_arr[current_index] = 0
+                    Appobjz_arr[current_index] = 0
+                    Appobjangle_arr[current_index] = 0
+            
                     
                     
                 
@@ -272,7 +277,7 @@ for b in range(blocks):
         End_Rew_arr[i] = game.get_total_reward()
         End_Time_arr[i] = (time.time()-start_time)
         End_FPS_arr[i] = (state.number/(time.time()-start_time))
-        #episode_index += 1
+        
 
         
     
@@ -329,7 +334,7 @@ for b in range(blocks):
             
 
         # Write episode_data to CSV file after each block
-    with open(episode_filename, 'a', newline='') as file:
+    with open(block_filename, 'a', newline='') as file:
             csv_writer = csv.writer(file)
             csv_writer.writerows(all_episode_data)
 

@@ -4,7 +4,7 @@ library(dplyr)
 
 
 # Define the CSV file path
-csv_file <- file.path("/home/seanm/_vizdoom/aaabe_game_data_block_1.csv")
+csv_file <- file.path("/home/seanm/_vizdoom/Ziege_game_data_block_1.csv")
 
 # Read the CSV, filling empty cells with "-"
 data <- read.csv(csv_file, header = TRUE, sep = ",", fill = TRUE, na.strings = "", row.names=NULL)
@@ -20,9 +20,8 @@ data$time_diff <- ifelse(data$time_diff < 0, NA, data$time_diff)
 
 View(data)
 barplot(
-    table(
-        round(
-            data$time_diff,digits=4)))
-
-
-
+  table(
+    round(
+          data$time_diff, digits = 4)
+  )
+)
