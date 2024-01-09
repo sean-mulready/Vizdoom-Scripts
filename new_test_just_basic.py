@@ -5,7 +5,7 @@ import time
 import numpy as np
 
 # Enter Subject Data
-sub_id = "Ziege"
+sub_id = "01"
 
 # define a number of blocks to write a file after each block so in case
 # the game crashes for any reason, not all data is lost
@@ -129,8 +129,6 @@ for b in range(blocks):
     #Use a set to keep track of uniqueobject IDs
     unique_object_ids = set()
 
-    # create a dictionary to store mapping between object ID and column index
-    #object_id_to_column_index = {}
 
     #create single column arrays for each variable to later concatenate into a dataframe
     Episode_arr = np.full((episodes*151,1), np.nan, dtype = np.int32)
