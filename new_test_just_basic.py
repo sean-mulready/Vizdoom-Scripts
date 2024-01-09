@@ -179,7 +179,7 @@ for b in range(blocks):
         start_time = time.time()  # Record the start time
 
         
-        episode_index = 0 
+        
         
         
         
