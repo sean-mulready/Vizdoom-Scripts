@@ -217,12 +217,12 @@ for b in range(blocks):
             Time_arr[current_index] = current_time
             
             
-            # Erfasse Daten für das Cacodemon (Objekt-ID 0)
+            # get data for Cacodemon
             for object_id in unique_object_ids:
                 if object_id == 0:
                     object_data = find_object_data(state.objects, object_id, "DoomPlayer")
                 if object_data is not None:
-            # Speichere Daten für das Cacodemon
+            # fill corresponding arrays with data of the Cacodemon
                     ObjID_arr[current_index] = object_data.id
                     Objname_arr[current_index] = object_data.name
                     Objx_arr[current_index] = object_data.position_x 
@@ -230,7 +230,7 @@ for b in range(blocks):
                     Objz_arr[current_index] = object_data.position_z
                     Objang_arr[current_index] = object_data.angle
                 else:
-            # Setze die Werte auf Standard, wenn keine Daten gefunden wurden
+            # what data to fill the array with if there is none 
                     ObjID_arr[current_index] = 0
                     Objname_arr[current_index] = "None"
                     Objx_arr[current_index] = 0
@@ -238,12 +238,12 @@ for b in range(blocks):
                     Objz_arr[current_index] = 0
                     Objang_arr[current_index] = 0
 
-            # Erfasse Daten für andere Objekte (außer dem Cacodemon)
+            # get data for the other objects
             for object_id in unique_object_ids:
                 if object_id != 0:
                     object_data = find_object_data(state.objects, object_id, "DoomPlayer")
                 if object_data is not None:
-            # Speichere Daten für andere Objekte
+            # fill arrays with the data
                     AppobjID_arr[current_index] = object_data.id
                     Appobjname_arr[current_index] = object_data.name
                     Appobjx_arr[current_index] = object_data.position_x
@@ -251,7 +251,7 @@ for b in range(blocks):
                     Appobjz_arr[current_index] = object_data.position_z
                     Appobjangle_arr[current_index] = object_data.angle
                 else:
-            # Setze die Werte auf Standard, wenn keine Daten gefunden wurden
+            # what data to fill the array with if there is none
                     AppobjID_arr[current_index] = 0
                     Appobjname_arr[current_index] = "None"
                     Appobjx_arr[current_index] = 0 
@@ -266,8 +266,9 @@ for b in range(blocks):
             
             
             current_index += 1 #increment index
-        
-            if state.number > 150:
+
+            # when to stop the episode, default by config-file is 300 tics
+            if state.number > 150: 
                 break
         
         
