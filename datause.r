@@ -4,7 +4,7 @@ library(dplyr)
 
 
 # Define the CSV file path
-csv_file <- file.path("/home/seanm/_vizdoom/Ziege_game_data_block_2.csv")
+csv_file <- file.path("/home/seanm/_vizdoom/01 Episodes 1 to 10.csv")
 
 # Read the CSV, filling empty cells with "-"
 data <- read.csv(csv_file, header = TRUE, sep = ",", fill = TRUE, na.strings = "", row.names=NULL)

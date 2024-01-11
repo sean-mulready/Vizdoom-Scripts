@@ -53,7 +53,7 @@ print("\nRECORDING EPISODES")
 print("************************\n")
 
 # Specify how many Episodes 
-episodes = 4
+episodes = 10
 
 
 # Loop through episodes
@@ -64,6 +64,9 @@ for i in range(episodes):
     while not game.is_episode_finished():
         s = game.get_state()
         game.advance_action()
+        # when to stop the episode, default by config-file is 300 tics
+        if s.number > 150: 
+            break
     print("Episode finished!")
     print("Total reward:", game.get_total_reward())
     print("************************")
