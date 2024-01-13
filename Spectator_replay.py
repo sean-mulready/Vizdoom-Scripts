@@ -1,4 +1,4 @@
-# replay and analyse data
+# replay and analyse data with arrays
 # UNDER CONSTRUCTION
 
 
@@ -45,7 +45,7 @@ pos_z = game.add_available_game_variable(vzd.GameVariable.POSITION_Z)
 angle = game.add_available_game_variable(vzd.GameVariable.ANGLE)
 
 # Set screen size
-#game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
+game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
 
     
 game.set_window_visible(True)
@@ -251,6 +251,11 @@ for i in range(episodes):
         
         
         current_index += 1 #increment index
+
+    End_Eps_arr[i] = i+1
+    End_Rew_arr[i] = game.get_total_reward()
+    End_Time_arr[i] = (time.time()-start_time)
+    End_FPS_arr[i] = (state.number/(time.time()-start_time))
 game.close()
 
 

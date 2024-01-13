@@ -20,7 +20,7 @@ game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
 # Multiple config files are okay, but combining these ones doesn't make much sense.
 
 game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/basic.cfg")
-
+#game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/deadly_corridor.cfg")
 # Enables information about all objects present in the current episode/level.
 game.set_objects_info_enabled(True)
 
@@ -45,7 +45,7 @@ game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
 
 # Enables spectator mode so you can play, but your agent is supposed to watch, not you.
 game.set_window_visible(True)
-game.set_mode(vzd.Mode.SPECTATOR)
+game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
 game.init()
 
 # Recording
