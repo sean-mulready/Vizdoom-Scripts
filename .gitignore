@@ -1,6 +1,5 @@
-# welche Dateien ignoriert werden sollen
-
 *.csv
 *.txt
 *.csv
 *.lmp
+data/

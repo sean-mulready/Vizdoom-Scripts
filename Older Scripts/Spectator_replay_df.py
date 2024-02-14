@@ -15,7 +15,7 @@ game = vzd.DoomGame()
 
 #find a way to 'import' episodes number and other data from recording script??
 
-episodes = 10
+episodes = 30
 sub_id = "01"
 # where to get the .ini-file from
 game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
@@ -46,10 +46,10 @@ pos_z = game.add_available_game_variable(vzd.GameVariable.POSITION_Z)
 angle = game.add_available_game_variable(vzd.GameVariable.ANGLE)
 
 # Set screen size
-game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
+#game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
 
     
-game.set_window_visible(True)
+game.set_window_visible(False)
 game.set_mode(vzd.Mode.PLAYER)
 game.init()
 
@@ -217,3 +217,5 @@ with open(episode_filename, 'a', newline='') as final_file:
 
 # remove the temporary file after the file with the modified columns has been written
 os.remove(temp_file)
+#for i in range(episodes):
+    #os.remove(f"{sub_id}_episode{i+1}_rec.lmp")

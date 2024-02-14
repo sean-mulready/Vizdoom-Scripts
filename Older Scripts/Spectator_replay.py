@@ -14,7 +14,7 @@ game = vzd.DoomGame()
 
 #find a way to 'import' episodes number and other data from recording script??
 
-episodes = 10
+episodes = 20
 sub_id = "01"
 # where to get the .ini-file from
 game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")

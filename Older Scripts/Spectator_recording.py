@@ -1,6 +1,6 @@
 # Script to record gameplay in Spectator Mode
 # UNDER CONSTRUCTION
-# for some reason, last episode isn't recorded -> current workaround: buffer-episode that instantly is terminated
+# for some reason, last episode isn't recorded -> current workaround: buffer-episode 
 
 import vizdoom as vzd
 import time
@@ -46,6 +46,7 @@ game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
 # Enables spectator mode so you can play, but your agent is supposed to watch, not you.
 game.set_window_visible(True)
 game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
+game.set_ticrate(50)
 game.init()
 
 # Recording
@@ -53,7 +54,7 @@ print("\nRECORDING EPISODES")
 print("************************\n")
 
 # Specify how many Episodes 
-episodes = 10
+episodes = 30
 
 
 # Loop through episodes
@@ -65,17 +66,14 @@ for i in range(episodes):
         s = game.get_state()
         game.advance_action()
         # when to stop the episode, default by config-file is 300 tics
-        if s.number > 150: 
-            break
+        #if s.number > 150: 
+            #break
     print("Episode finished!")
     print("Total reward:", game.get_total_reward())
     print("************************")
     time.sleep(0.5)
-game.new_episode(f'buffer.lmp')
-while not game.is_episode_finished():
-    s = game.get_state()
-    if s.number >= 0:
-        break
+game.new_episode()
+
 
    
 game.close()
