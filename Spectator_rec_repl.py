@@ -15,9 +15,17 @@
 # as well as getting the LineBreak.txt and replacing linebreak.py 
 # from https://github.com/peircej/psychopy/tree/release/psychopy/tools )
 
+
+# Update Feb/15/24 : Psychopy instruction screens and black background for episodes implemented
+
+# Update Feb/23/24 : 
+# -Instructions are now implemented as .jpg, as there is no single-word-formatting in the text_stims 
+# - more Subject-data 
+# - began to rearrange columns
+
+
 # WHAT IS COMING: 
-# - implementing a psychopy environment to have instructions and a fullscreen-background
-# - probably re-arranging the whole dataframe with a more useful order of columns 
+# - more re-arranging the whole dataframe with a more useful order of columns 
 # - changing rewards so that if choosing the wrong movement-key
 #   (further away) the reward is < -1 
 
@@ -33,29 +41,161 @@ import numpy as np
 import pandas as pd
 from psychopy import core, visual, event
 
-# Enter Subject Data, Ticrate and number of Episodes
-sub_id = "3"
+
+#img-dir for instructions
+
+img_dir = os.getcwd() + "/exp_img/"
+
+# Enter Subject Data
+sub_num = '1'           # ongoing numerizing as string
+sub_id = 'HECO91M'      # Construct ID as : First 2 letters of birth-location, first 2 letters of mother's first name, last two digits of birth-year, gender in one letter
+age = 32                # Age as Integer
+gender = 'm'            # gender as string (m = male, f=female, nb = non-binary, o = other)
+glasses = True          # as boolean
+
+
+# Enter experiment configurations (episodes and ticrate = speed and time-resolution)
 episodes = 3
 ticrate = 50 #number of tics('state-loops') per second, default is 35
 
-# specify number of block, make sure it's even
-block_num = 4  
+# specify number of blocks, make sure it's even
+block_num = 2 
 if block_num % 2 == 0:
     None
 elif block_num %2 != 0:
-    block_number = (block_num+1)
+    block_num = (block_num+1)
+
+# psychopy setup for interface
+
+# window
+screen_size = [1920, 1080]
+win = visual.Window(
+    color='black',
+    size=[1920, 1080],
+    fullscr=True)
+
+# key to go forward
+
+continue_key = 'space'
+
+
+
+# instructions before experiment
+
+instructions = {
+    'instructions_1': {'image': os.path.join(img_dir, "instructions1.jpg"), 'image_size': (1.8,1.6)},
+    'instructions_2': {'image': os.path.join(img_dir, "instructions2.jpg"), 'image_size': (1.8,1.6)},
+    'instructions_3': {'image': os.path.join(img_dir, "instructions3.jpg"), 'image_size': (1.8,1.6)},
+    'instructions_4': {'image': os.path.join(img_dir, "instructions4.jpg"), 'image_size': (1.8,1.6)},
+    'instructions_5': {'image': os.path.join(img_dir, "instructions5.jpg"), 'image_size': (1.8,1.6)},
+    'instructions_6': {'text': f'Ihr Ziel ist es, das Monster so schnell wie möglich zu erschießen. Dazu werden Sie {block_num} Blöcke mit je {episodes} Durchgängen spielen. Sie haben nach jedem Block die Möglichkeit, eine kurze Pause einzulegen wenn Sie möchten, da Sie jeden Block selbst starten. \n\n Bitte LEERTASTE drücken, um fortzufahren'},
+    'instructions_7': {'image': os.path.join(img_dir, "instructions7.jpg"), 'image_size': (1.8,1.6)}
+
+}
+
+
+
+
+# presenting the instructions
+def present_text(window_instance,
+                 instr_text='placeholder',
+                 text_size=0.075,
+                 instructions=True,
+                 text_position=(0., 0.),
+                 unit='norm',
+                 continue_key='space',
+                 image=None,
+                 image_size=None):
+    
+    # Calculate default text position
+    default_text_position = (0., 0.)
+    
+    # Check if only image is provided
+    if instr_text == 'placeholder' and image:
+        # Draw the image stimulus at the center
+        image_position = (0., 0)
+        if image_size:
+            image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=image_size)
+        else:
+            image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=(0.5, 0.5))  # Default size
+        image_stim.draw()
+    
+    else:
+        # Draw the text stimulus if text is provided
+        if instr_text != 'placeholder':
+            if image:  # If both text and image are present
+                text_position = (0., 0.5)  # Position above the center
+            else:
+                text_position = default_text_position  # Center position if only text is present
+                
+            text_stim = visual.TextStim(window_instance, 
+                                        height=text_size, 
+                                        units=unit, 
+                                        pos=text_position,
+                                        wrapWidth=1.5
+                                    )
+            text_stim.setText(instr_text)
+            text_stim.draw()
+
+        # Draw the image stimulus if image is provided
+        if image:
+            image_position = (0, -0.5)  # Position below the center
+            if image_size:
+                image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=image_size)
+            else:
+                image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=(0.5, 0.5))  # Default size
+            image_stim.draw()
+    
+    window_instance.flip()
+    
+    if instructions:
+        event.waitKeys(keyList=[continue_key])
+    else:
+        core.wait(0.01)
+
+
+
 
 # mu-vector and shuffle
 
 mu_vec = int(block_num/2)*[0,1]
 np.random.shuffle(mu_vec)
 
-# nmumber of episodes within each block
+
+
+#start with instructions
+# Iterate over instructions
+# Iterate over instructions
+for instruction_key, instruction_data in instructions.items():
+    image_size = instruction_data.get('image_size')  # Get image size if specified
+    # Check if the instruction has text or not
+    if 'text' in instruction_data:
+        present_text(win, 
+                     instr_text=instruction_data['text'], 
+                     image=instruction_data.get('image'),
+                     instructions=True,
+                     continue_key=continue_key,
+                     image_size=image_size,  # Pass image size to present_text function
+                     )
+    else:
+        present_text(win, 
+                     image=instruction_data.get('image'),
+                     instructions=True,
+                     continue_key=continue_key,
+                     image_size=image_size,  # Pass image size to present_text function
+                     )
+
+# a blank black screen for the background. Will close after replay and data-processing is finished
+present_text(window_instance = win,
+             instr_text= '',
+             instructions = False
+             )
 
 
 
-# function for choosing if normal or inverted movement in relation to 
-# the parameter mu and the side on which the Cacodemon spawns
+
+    # function for choosing if normal or inverted movement in relation to 
+    # the parameter mu and the side on which the Cacodemon spawns
 def movement_probabilities(cacodemon_position, mu):
     prob_norm = 1
     prob_inv = 0
@@ -76,7 +216,26 @@ def movement_probabilities(cacodemon_position, mu):
     return np.random.choice([0,1], p = [prob_norm,prob_inv])
 
 
+#implementing the array for mu 
+mu_arr = np.full(block_num, np.nan, dtype = np.int32)
+
+#playing the game blockwise
 for b in range(block_num):
+    win = visual.Window(
+            color='black',
+            size=[1920, 1080],
+            fullscr=True)
+
+    present_text(window_instance=win,
+                    instr_text=f'Starte Block {b + 1} von {block_num}  \n\n' \
+                        'LEERTASTE um zu beginnen ...',
+                        continue_key=continue_key)
+    
+    win.close()
+    
+
+
+
     game = vzd.DoomGame()
     # where to get the .ini-file from
     game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
@@ -123,8 +282,9 @@ for b in range(block_num):
 
     # using up elements of shuffled vector
     mu = mu_vec.pop(0)
-    # implementing the array for tracking the movement-choices
+    # implementing the array for tracking the movement-choices 
     movement_choice_arr = np.full(episodes, np.nan, dtype = np.int32)
+    
     # Loop through episodes
     for i in range(episodes):
         
@@ -169,29 +329,48 @@ for b in range(block_num):
         print("Episode finished!")
         print("Total reward:", game.get_total_reward())
         print("************************")
-        # rebind keys if they are switched
-
-        #game.send_game_command("bind A +moveleft")
-        #game.send_game_command("bind D +moveright")
 
         #track movement choices
         movement_choice_arr[i]= movement_choice
+
         time.sleep(0.5)
         
     # buffer-episode: needed as the last episode isn't recorded
     game.new_episode()
 
+    while not game.is_episode_finished():
+        
+            state = game.get_state()
 
+            if state.number > 0:
+                break
+
+    mu_arr[b] = mu 
+    
     
     game.close()
+    
 
+win = visual.Window(
+            color='black',
+            size=[1920, 1080],
+            fullscr=True)
 
+present_text(window_instance=win,
+                    instr_text='Vielen Dank für Ihre Teilnahme! \n' \
+                        'Das Experiment ist nun abgeschlossen. \n' \
+                        'Wenn Sie am Ende dazu aufgefordert werden, drücken Sie' \
+                            ' ein letztes Mal die LEERTASTE, der Bildschirm wird daraufhin schwarz.'\
+                                'Anschließend geben Sie der Versuchsleitung Bescheid. Vielen Dank \n\n'\
+                                    'Drücken Sie bitte jetzt die LEERTASTE')
 
+win.close()
 
     
 
-    # REPLAY AND SAVING AS CSV
+# REPLAY AND SAVING AS CSV
 
+game = vzd.DoomGame()
 for b in range(block_num):
 
     # where to get the .ini-file from
@@ -229,29 +408,35 @@ for b in range(block_num):
     temp_file = "temp.csv"
 
     # Open a single CSV file to store all episode data
-    output_path = os.getcwd() + f'/data/sub-{sub_id}'
+    output_path = os.getcwd() + f'/data/sub-{sub_num}'
 
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
 
-    episode_filename = f"{output_path}/{sub_id}_block_{b+1}_game_dataframe.csv"
+    episode_filename = f"{output_path}/{sub_num}_block_{b+1}_game_dataframe.csv"
     with open(temp_file, 'w', newline='') as temp_csv: 
         csv_writer = csv.writer(temp_csv)
-        columns = ["Episode",
-                "State",
-                "Movement",
-                "Tic", 
-                "Health", 
-                "Ammo", 
-                "x_pos", 
-                "y_pos", 
-                "z_pos", 
-                "angle/orientation", 
-                "Action", 
-                "Reward", 
-                "Cumulative_Reward", 
-                "Time"]
+        columns = ["Sub_num",
+                   "Sub_ID",
+                   "Age",
+                   "Gender",
+                   "Glasses",
+                   "Episode",
+                   "State",
+                   "Mu",
+                   "Movement",
+                   "Tic", 
+                   "Health", 
+                   "Ammo", 
+                   "x_pos", 
+                   "y_pos", 
+                   "z_pos", 
+                   "angle/orientation", 
+                   "Action", 
+                   "Reward", 
+                   "Cumulative_Reward", 
+                   "Time"]
         
 
 
@@ -309,20 +494,26 @@ for b in range(block_num):
                                             f"{object_id}_angle"])
                 
                 # Collect data for each time step within the episode
-                row = [i + 1, 
-                        state.number,
-                        movement_choice_arr[i],
-                        game.get_episode_time(), 
-                        game.get_game_variable(vzd.GameVariable.HEALTH),
-                        game.get_game_variable(vzd.GameVariable.AMMO2), 
-                        game.get_game_variable(vzd.GameVariable.POSITION_X),
-                        game.get_game_variable(vzd.GameVariable.POSITION_Y), 
-                        game.get_game_variable(vzd.GameVariable.POSITION_Z),
-                        game.get_game_variable(vzd.GameVariable.ANGLE), 
-                        last_action_trnsl, 
-                        reward, 
-                        cumulative_reward, 
-                        current_time
+                row = [sub_num,
+                       sub_id,
+                       age,
+                       gender,
+                       glasses,
+                       i + 1, 
+                       state.number,
+                       mu_arr[b],
+                       movement_choice_arr[i],
+                       game.get_episode_time(), 
+                       game.get_game_variable(vzd.GameVariable.HEALTH),
+                       game.get_game_variable(vzd.GameVariable.AMMO2), 
+                       game.get_game_variable(vzd.GameVariable.POSITION_X),
+                       game.get_game_variable(vzd.GameVariable.POSITION_Y), 
+                       game.get_game_variable(vzd.GameVariable.POSITION_Z),
+                       game.get_game_variable(vzd.GameVariable.ANGLE), 
+                       last_action_trnsl, 
+                       reward, 
+                       cumulative_reward, 
+                       current_time
                         
                         ]
                 
