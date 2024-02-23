@@ -3,3 +3,4 @@
 *.csv
 *.lmp
 data/
+_vizdoom/
