@@ -12,18 +12,18 @@ setwd("/home/seanm/_vizdoom/data")
 # enter the number of blocks
 block_num <- 4
 # enter the number of subjects measured
-subjects <- 3
+subjects <- 1
 # enter ticrate that is used during experiment
 ticrate <- 50
 
 
-for (subject_id in 1:subjects) {
+for (sub_num in 1:subjects) {
   subject_data <- data.frame()
-  subject_folder <- paste0("sub-", subject_id)
+  subject_folder <- paste0("sub-", sub_num)
   if (!file.exists(subject_folder)) next  # Skip if the folder doesn't exist
   setwd(subject_folder)  # Move to the subject's folder
   for (b in 1:(block_num)) {
-    current_file <- paste0(subject_id, "_block_", b, "_game_dataframe.csv")
+    current_file <- paste0(sub_num, "_block_", b, "_game_dataframe.csv")
     if (!file.exists(current_file)) next  # Skip if the file doesn't exist
     current_data <- read.csv(current_file,
                              header = TRUE,
@@ -32,12 +32,11 @@ for (subject_id in 1:subjects) {
                              na.strings = "", 
                              row.names = NULL)
     current_data <- current_data |>
-      mutate(Block = b, .before = Episode) |>
-      mutate(subject_id = subject_id, .before = Block)
-   subject_data <- bind_rows(subject_data, current_data)
+      mutate(Block = b, .before = Episode)
+    subject_data <- bind_rows(subject_data, current_data)
   }
-  
-  save(subject_data, file = paste0("combined_preprocessed_sub-", subject_id, ".csv"))
+
+  save(subject_data, file = paste0("combined_preprocessed_sub-", sub_num, ".csv"))
 
   setwd("..")  # Move back to the parent directory
   View(subject_data)
