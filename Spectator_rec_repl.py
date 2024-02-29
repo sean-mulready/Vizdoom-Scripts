@@ -23,9 +23,11 @@
 # - more Subject-data 
 # - began to rearrange columns
 
+# Update Feb/29/24 :
+# - Rearranged columns 
 
-# WHAT IS COMING: 
-# - more re-arranging the whole dataframe with a more useful order of columns 
+
+# WHAT IS COMING:  
 # - changing rewards so that if choosing the wrong movement-key
 #   (further away) the reward is < -1 
 
@@ -47,7 +49,7 @@ from psychopy import core, visual, event
 img_dir = os.getcwd() + "/exp_img/"
 
 # Enter Subject Data
-sub_num = '1'           # ongoing numerizing as string
+sub_num = '3'           # ongoing numerizing as string
 sub_id = 'HECO91M'      # Construct ID as : First 2 letters of birth-location, first 2 letters of mother's first name, last two digits of birth-year, gender in one letter
 age = 32                # Age as Integer
 gender = 'm'            # gender as string (m = male, f=female, nb = non-binary, o = other)
@@ -380,6 +382,11 @@ for b in range(block_num):
     game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/basic.cfg")
     # no window needed for replaying and gathering data, saves time
     game.set_window_visible(False)
+    # Enables information about all objects present in the current episode/level.
+    game.set_objects_info_enabled(True)
+
+    # Enables information about all sectors (map layout).
+    game.set_sectors_info_enabled(True)
     # should actually work in every mode but seems safe to use the same as when recording
     game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
     game.init()
@@ -403,6 +410,7 @@ for b in range(block_num):
         for o in object_list:
             if o.id == object_id:
                 return o
+        return None
 
     # create a temporary csv file
     temp_file = "temp.csv"
@@ -427,16 +435,16 @@ for b in range(block_num):
                    "Mu",
                    "Movement",
                    "Tic", 
-                   "Health", 
-                   "Ammo", 
+                   "Time",
+                   "Action",
                    "x_pos", 
                    "y_pos", 
                    "z_pos", 
-                   "angle/orientation", 
-                   "Action", 
+                   "angle/orientation",  
                    "Reward", 
-                   "Cumulative_Reward", 
-                   "Time"]
+                   "Cumulative_Reward",
+                   "Health", 
+                   "Ammo"]
         
 
 
@@ -446,7 +454,7 @@ for b in range(block_num):
 
             
 
-            # create a dictionary to store mapping between object ID and column index
+        # create a dictionary to store mapping between object ID and column index
         object_id_to_column_index = {}
 
 
@@ -503,17 +511,17 @@ for b in range(block_num):
                        state.number,
                        mu_arr[b],
                        movement_choice_arr[i],
-                       game.get_episode_time(), 
-                       game.get_game_variable(vzd.GameVariable.HEALTH),
-                       game.get_game_variable(vzd.GameVariable.AMMO2), 
+                       game.get_episode_time(),
+                       current_time,
+                       last_action_trnsl, 
                        game.get_game_variable(vzd.GameVariable.POSITION_X),
                        game.get_game_variable(vzd.GameVariable.POSITION_Y), 
                        game.get_game_variable(vzd.GameVariable.POSITION_Z),
-                       game.get_game_variable(vzd.GameVariable.ANGLE), 
-                       last_action_trnsl, 
+                       game.get_game_variable(vzd.GameVariable.ANGLE),  
                        reward, 
                        cumulative_reward, 
-                       current_time
+                       game.get_game_variable(vzd.GameVariable.HEALTH),
+                       game.get_game_variable(vzd.GameVariable.AMMO2)
                         
                         ]
                 
@@ -561,11 +569,11 @@ for b in range(block_num):
     game.close()
 
     # Append the contents from temp_file to episode_filename
-    with open(episode_filename, 'a', newline='') as final_file:
-        with open(temp_file, 'r') as temp_csv:
-            temp_csv_reader = csv.reader(temp_csv)
+    with open(temp_file, 'r') as temp_csv:
+        temp_csv_reader = csv.reader(temp_csv)
+        with open(episode_filename, 'a', newline='') as final_file:
+            csv_writer = csv.writer(final_file)
             for row in temp_csv_reader:
-                csv_writer = csv.writer(final_file)
                 csv_writer.writerow(row)
 
     # remove the temporary csv and the recording-files after the file with 
