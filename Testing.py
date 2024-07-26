@@ -23,11 +23,9 @@
 # - more Subject-data 
 # - began to rearrange columns
 
-# Update Feb/29/24 :
-# - Rearranged columns 
 
-
-# WHAT IS COMING:  
+# WHAT IS COMING: 
+# - more re-arranging the whole dataframe with a more useful order of columns 
 # - changing rewards so that if choosing the wrong movement-key
 #   (further away) the reward is < -1 
 
@@ -49,18 +47,18 @@ from psychopy import core, visual, event
 img_dir = os.getcwd() + "/exp_img/"
 
 # Enter Subject Data
-sub_num = '1'           # ongoing numerizing as string
-sub_id = 'HECO91M'      # Construct ID as : First 2 letters of birth-location, first 2 letters of mother's first name, last two digits of birth-year, gender in one letter
-age = 32                # Age as Integer
-gender = 'm'            # gender as string (m = male, f=female, nb = non-binary, o = other)
-glasses = True          # as boolean
+sub_num = "1"
+sub_id = "HECO91M"
+age = 32
+gender = 'm'
+glasses = True
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
-episodes = 2
+episodes = 10
 ticrate = 50 #number of tics('state-loops') per second, default is 35
 
-# specify number of blocks, make sure it's even
+# specify number of block, make sure it's even
 block_num = 4 
 if block_num % 2 == 0:
     None
@@ -166,6 +164,7 @@ np.random.shuffle(mu_vec)
 
 
 #start with instructions
+# Iterate over instructions
 # Iterate over instructions
 for instruction_key, instruction_data in instructions.items():
     image_size = instruction_data.get('image_size')  # Get image size if specified
@@ -291,7 +290,7 @@ for b in range(block_num):
         
         print("Episode #" + str(i + 1))
         #start the recording
-        game.new_episode(f"{sub_id}_b{b+1}_e{i+1}_basic_rec.lmp")
+        game.new_episode(f"{sub_id}_block{b+1}_episode{i+1}_rec.lmp")
 
         #to get the state and in the next step the object_info
         #to be able to determine the movement we need to go into 
@@ -381,11 +380,6 @@ for b in range(block_num):
     game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/basic.cfg")
     # no window needed for replaying and gathering data, saves time
     game.set_window_visible(False)
-    # Enables information about all objects present in the current episode/level.
-    game.set_objects_info_enabled(True)
-
-    # Enables information about all sectors (map layout).
-    game.set_sectors_info_enabled(True)
     # should actually work in every mode but seems safe to use the same as when recording
     game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
     game.init()
@@ -409,7 +403,6 @@ for b in range(block_num):
         for o in object_list:
             if o.id == object_id:
                 return o
-        return None
 
     # create a temporary csv file
     temp_file = "temp.csv"
@@ -421,7 +414,7 @@ for b in range(block_num):
         os.makedirs(output_path)
 
 
-    episode_filename = f"{output_path}/{sub_num}_b_{b+1}_basic_game_dataframe.csv"
+    episode_filename = f"{output_path}/{sub_num}_block_{b+1}_game_dataframe.csv"
     with open(temp_file, 'w', newline='') as temp_csv: 
         csv_writer = csv.writer(temp_csv)
         columns = ["Sub_num",
@@ -434,26 +427,26 @@ for b in range(block_num):
                    "Mu",
                    "Movement",
                    "Tic", 
-                   "Time",
-                   "Action",
+                   "Health", 
+                   "Ammo", 
                    "x_pos", 
                    "y_pos", 
                    "z_pos", 
-                   "angle/orientation",  
+                   "angle/orientation", 
+                   "Action", 
                    "Reward", 
-                   "Cumulative_Reward",
-                   "Health", 
-                   "Ammo"]
+                   "Cumulative_Reward", 
+                   "Time"]
         
 
 
 
-        #Use a set to keep track of uniqueobject IDs. Set means uniqueness is enforced
+        #Use a set to keep track of uniqueobject IDs
         unique_object_ids = set()
 
             
 
-        # create a dictionary to store mapping between object ID and column index
+            # create a dictionary to store mapping between object ID and column index
         object_id_to_column_index = {}
 
 
@@ -465,7 +458,7 @@ for b in range(block_num):
         for i in range(episodes):
             
             # tell to replay 
-            game.replay_episode(f"{sub_id}_b{b+1}_e{i+1}_basic_rec.lmp")
+            game.replay_episode(f"{sub_id}_block{b+1}_episode{i+1}_rec.lmp")
             cumulative_reward = 0  # Initialize cumulative reward
             start_time = time.time()  # Record the start time
             
@@ -488,13 +481,9 @@ for b in range(block_num):
                 object_ids = []
                 for o in state.objects:
                     if o.name != "DoomPlayer":
-                        unique_object_ids.add(o.id)
-                        #object_ids.append(o.id)
-                #unique_object_ids.update(object_ids)
+                        object_ids.append(o.id)
+                unique_object_ids.update(object_ids)
 
-                # this code defines the current column-number as the specific value for the key of the object_id
-                # in the referred dictionary (id to column index) to then add to that so 
-                # that for each new object 5 new columns are added
                 for object_id in unique_object_ids:
                         if object_id not in object_id_to_column_index:
                             object_id_to_column_index[object_id] = len(columns)
@@ -514,17 +503,17 @@ for b in range(block_num):
                        state.number,
                        mu_arr[b],
                        movement_choice_arr[i],
-                       game.get_episode_time(),
-                       current_time,
-                       last_action_trnsl, 
+                       game.get_episode_time(), 
+                       game.get_game_variable(vzd.GameVariable.HEALTH),
+                       game.get_game_variable(vzd.GameVariable.AMMO2), 
                        game.get_game_variable(vzd.GameVariable.POSITION_X),
                        game.get_game_variable(vzd.GameVariable.POSITION_Y), 
                        game.get_game_variable(vzd.GameVariable.POSITION_Z),
-                       game.get_game_variable(vzd.GameVariable.ANGLE),  
+                       game.get_game_variable(vzd.GameVariable.ANGLE), 
+                       last_action_trnsl, 
                        reward, 
                        cumulative_reward, 
-                       game.get_game_variable(vzd.GameVariable.HEALTH),
-                       game.get_game_variable(vzd.GameVariable.AMMO2)
+                       current_time
                         
                         ]
                 
@@ -572,15 +561,15 @@ for b in range(block_num):
     game.close()
 
     # Append the contents from temp_file to episode_filename
-    with open(temp_file, 'r') as temp_csv:
-        temp_csv_reader = csv.reader(temp_csv)
-        with open(episode_filename, 'a', newline='') as final_file:
-            csv_writer = csv.writer(final_file)
+    with open(episode_filename, 'a', newline='') as final_file:
+        with open(temp_file, 'r') as temp_csv:
+            temp_csv_reader = csv.reader(temp_csv)
             for row in temp_csv_reader:
+                csv_writer = csv.writer(final_file)
                 csv_writer.writerow(row)
 
     # remove the temporary csv and the recording-files after the file with 
     # the modified columns has been written
     os.remove(temp_file)
     for i in range(episodes):
-        os.remove(f"{sub_id}_b{b+1}_e{i+1}_basic_rec.lmp")
+        os.remove(f"{sub_id}_block{b+1}_episode{i+1}_rec.lmp")

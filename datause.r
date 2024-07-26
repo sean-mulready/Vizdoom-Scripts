@@ -16,7 +16,6 @@ subjects <- 1
 # enter ticrate that is used during experiment
 ticrate <- 50
 
-
 for (sub_num in 1:subjects) {
   subject_data <- data.frame()
   subject_folder <- paste0("sub-", sub_num)
@@ -34,8 +33,40 @@ for (sub_num in 1:subjects) {
     current_data <- current_data |>
       mutate(Block = b, .before = Episode)
     subject_data <- bind_rows(subject_data, current_data)
+
   }
 
+  # Calculate ratios
+  ratios <- list()
+  for (b in 1:block_num) {
+    block_data <- subject_data %>%
+      filter(Block == b)
+
+    left_monster <- block_data %>%
+      filter(`X0_y` < -9)
+
+    right_monster <- block_data %>%
+      filter(`X0_y` > 75)
+
+    left_inverted_movement <- left_monster %>%
+      filter(Movement == 1)
+
+    right_inverted_movement <- right_monster %>%
+      filter(Movement == 1)
+
+    left_ratio <- nrow(left_inverted_movement) / nrow(left_monster)
+    right_ratio <- nrow(right_inverted_movement) / nrow(right_monster)
+
+    ratios[[b]] <- list(Block = b,
+                        Left_Ratio = left_ratio,
+                        Right_Ratio = right_ratio)
+  }
+
+  cat("Subject", sub_num, "\n")
+  for (i in 1:block_num) {
+    cat("Block", ratios[[i]]$Block, "Left Ratio:", ratios[[i]]$Left_Ratio, "Right Ratio:", ratios[[i]]$Right_Ratio, "\n")
+  }
+  cat("\n")
   save(subject_data, file = paste0("combined_preprocessed_sub-", sub_num, ".csv"))
 
   setwd("..")  # Move back to the parent directory
@@ -45,6 +76,12 @@ for (sub_num in 1:subjects) {
 
 
 
+#was das ding machen soll: Es soll berechnen, wie häufig invertierte Steuerung verwendet wurde, wo das Monster war (links oder rechts) und welches Mu.
+#Es muss also wissen: Monster links oder rechts (zählen) und steuerung dazu zählen
+#also quasi Paare zählen: wie oft links + normal und links + invertiert und das gleiche für rechts
+#dann die Quote über alle Trials aber muss das nochmal sortieren also in abhängigkeit von etwas ... genau, also steurungspaarung mit seite des monsters geteilt 
+#durch gesamtzahl der seite des monsters
+# movement-choice = 1 ist invertiert, 0 ist normal
 
 
 
