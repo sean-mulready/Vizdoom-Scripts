@@ -17,7 +17,6 @@ import vizdoom as vzd
 import os 
 import csv
 import time
-import numpy as np
 import re
 
 # Function to extract numbers from filenames
