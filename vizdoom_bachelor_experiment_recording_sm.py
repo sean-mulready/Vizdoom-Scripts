@@ -14,7 +14,7 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '6'           # ongoing numerizing as string
+sub_num = '14'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
 gender = 'o'            # gender as string (m = male, f=female, nb = non-binary, o = other)
 handedness = 'left'     # handedness as left or right (string)
@@ -22,10 +22,12 @@ glasses = False          # as boolean
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
-ep_basic = 10 # number of episodes = number of trials
+ep_basic = 5 # number of episodes = number of trials
+episode_maxtime = 3 # in seconds
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
-block_num = 4 #number of blocks
+block_num = 1 #number of blocks
 variation = 1 # variation options: 1 or 2 
+target_name = "Bullseye" #enter the Target Actors name like Bullseye, DoomImp, Cacodemon, etc
 
 ########################################################################################################################################
 ########################################################################################################################################
@@ -205,12 +207,15 @@ present_text(window_instance = win,
 #needs to be worked on!!!!!!########################################
 instructions_basic = {
     'begin_1': {'image': os.path.join(img_dir, "instructions_begin.jpg"), 'image_size': (1.8,1.6)},
-    'basic_goal': {'image': os.path.join(img_dir, "instructions_basic_goal.jpg"), 'image_size': (1.8,1.6)},
+    'basic_goal': {'image': os.path.join(img_dir, "instructions_basic_target.jpg"), 'image_size': (1.8,1.6)},
     'basic_control': {'image': os.path.join(img_dir, "instructions_basic_control.jpg"), 'image_size': (1.8,1.6)},
-    'basic_inversion': {'image': os.path.join(img_dir, "instructions_basic_inversion.jpg"), 'image_size': (1.8,1.6)},
+    'basic_inversion': {'image': os.path.join(img_dir, "instructions_basic_inversion_target.jpg"), 'image_size': (1.8,1.6)},
     'basic_probabilities': {'image': os.path.join(img_dir, "instructions_basic_movement_probabilities.jpg"), 'image_size': (1.8,1.6)},
     'basic_important_note': {'image': os.path.join(img_dir, "instructions_basic_important_note.jpg"), 'image_size': (1.8,1.6)},
-    'basic_ep_info': {'text': f'Erschießen Sie so schnell wie möglich die Kreatur! Sie werden {block_num} Blöcke mit je {ep_basic} Durchgängen spielen. \n\n Bitte LEERTASTE drücken, um fortzufahren'}
+    'basic_ep_info': {'text': f'Erschießen Sie so schnell wie möglich das Ziel! \n' \
+                      f'Sie werden {block_num} Blöcke mit je {ep_basic} Durchgängen spielen. \n' \
+                      f'Sie haben {episode_maxtime} Sekunden Zeit pro Durchlauf \n\n' \
+                      f'Bitte LEERTASTE drücken, um fortzufahren'}
     
 
 }
@@ -245,27 +250,27 @@ present_text(window_instance = win,
 # for each variation, there is an optimal choice, so one key where
 # the chance for the necessary movement is higher
 # e.g.: If the variation is 1 there's a probability of .8, the movement is
-# inverted if the monster spawns on the right side (optimal choice A/left)
+# inverted if the target spawns on the right side (optimal choice A/left)
 # and a probability of .8 that the movement is normal 
-# if the monster spawns on the left side (optimal choice A/left)
+# if the target spawns on the left side (optimal choice A/left)
 # so if the variation for a block of episodes is 1, the optimal choice is A/left
 # for every episode
 
-def movement_probabilities(cacodemon_position, balance):
+def movement_probabilities(target_position, variation):
     prob_norm = 1
     prob_inv = 0
     if variation == 1:
-        if cacodemon_position < (-9): #if the monster spawns on the right side
+        if target_position < (-9): #if the target spawns on the right side
             prob_norm = 0.2
             prob_inv = 0.8
-        elif cacodemon_position > 75: #if the monster spawns on the left side
-            prob_norm = 0.2
-            prob_inv = 0.8
-    elif variation == 2:
-        if cacodemon_position < (-9): #if the monster spawns on the right side
+        elif target_position > 75: #if the target spawns on the left side
             prob_norm = 0.8
             prob_inv = 0.2
-        elif cacodemon_position > 75: # if the monster spawns on the left side
+    elif variation == 2:
+        if target_position < (-9): #if the target spawns on the right side
+            prob_norm = 0.8
+            prob_inv = 0.2
+        elif target_position > 75: # if the target spawns on the left side
             prob_norm = 0.2
             prob_inv = 0.8
     return np.random.choice([0,1], p = [prob_norm,prob_inv])
@@ -295,7 +300,7 @@ for b in range(block_num):
 
 
     # loading the config file. Created my own which relates to my own experiment.wad
-    # with customized map and spwaning ranges for the cacodemon
+    # with customized map and spwaning ranges for the target
     game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/experiment.cfg")
 
     # Enables information about all objects present in the current episode/level.
@@ -320,21 +325,22 @@ for b in range(block_num):
     # Set screen size
     game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
 
-    # Enables spectator mode so you can play, but your agent is supposed to watch, not you.
+    # makes the game window visible, as humans do play it
     game.set_window_visible(True)
-    game.set_render_hud(False)
+    # If the hud (available ammo, health, etc.) is visible
+    game.set_render_hud(True)
+    # set an async spectator mode, so the agent (computer) watches and the human get's to play
     game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
+    #set the ticrate (frames per second = ingame time)
     game.set_ticrate(ticrate_basic)
+    # set the maximum time of the game in tics
+    game.set_episode_timeout(episode_maxtime*ticrate_basic)
 
     # Initialize the game
     game.init()
 
     # RECORDING
 
-
-
-    # using up elements of shuffled vector  # DELETE IF NOT NEEDED!!!!
-    #balance = balance_vec.pop(0)
 
     # implementing the array for tracking the movement type (normal or inverted)
     movement_type_arr = np.full(ep_basic, np.nan, dtype = np.int32)
@@ -357,15 +363,15 @@ for b in range(block_num):
         
             state = game.get_state()
 
-            #getting the cacodemon's position for
+            #getting the targets' position for
             #movement-determination
             for o in state.objects:
-                if o.name == "Cacodemon":
-                    cacodemon_position = o.position_y
+                if o.name == target_name:
+                    target_position = o.position_y
                 
                     break 
 
-            movement_type = movement_probabilities(cacodemon_position,variation)
+            movement_type = movement_probabilities(target_position,variation)
             
             # bind keys according to result of the decision
             if movement_type == 1:
@@ -374,8 +380,7 @@ for b in range(block_num):
             else:
                 game.send_game_command("bind A +moveleft")
                 game.send_game_command("bind D +moveright")
-            # game will stop at 300 Tics by default
-        # which is 6 seconds at a ticrate of 50
+        # game will stop after defined maxTime 
         while not game.is_episode_finished():
             state = game.get_state()
             game.advance_action()
@@ -401,9 +406,9 @@ for b in range(block_num):
             if state.number > 0:
                 break
     
-    #balance_arr[b] = balance
+    
 
-    #start the tsv file which stores sub_num, block, episode, balance and concrete movement choice (maybe another column in words 'normal/inverted') 
+    #start the tsv file which stores sub_num, block, episode, variation and concrete movement choice (maybe another column in words 'normal/inverted') 
     # Check if file exists
     file_exists = os.path.isfile('game_data.tsv')
 
