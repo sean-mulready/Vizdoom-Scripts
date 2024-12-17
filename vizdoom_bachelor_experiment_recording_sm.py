@@ -16,7 +16,7 @@ from psychopy import core, visual, event
 # Enter Subject Data
 sub_num = '14'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
-gender = 'o'            # gender as string (m = male, f=female, nb = non-binary, o = other)
+sex = 'o'            # sex as string (m = male, f=female, nb = non-binary, o = other)
 handedness = 'left'     # handedness as left or right (string)
 glasses = False          # as boolean
 
@@ -66,7 +66,7 @@ else:
             columns = [
                 'sub_num',
                 'age',
-                'gender',
+                'sex',
                 'handedness',
                 'glasses'
             ]
@@ -76,7 +76,7 @@ else:
         row = [
             sub_num,
             age,
-            gender,
+            sex,
             handedness,
             glasses
         ]
