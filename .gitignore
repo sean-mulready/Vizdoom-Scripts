@@ -4,4 +4,4 @@
 *.lmp
 *.pdf
 data/
-_vizdoom/
+_vizdoom/sub*/
