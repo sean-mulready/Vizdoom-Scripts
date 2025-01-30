@@ -14,7 +14,7 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '14'           # ongoing numerizing as string
+sub_num = '31'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
 sex = 'o'            # sex as string (m = male, f=female, nb = non-binary, o = other)
 handedness = 'left'     # handedness as left or right (string)
@@ -26,7 +26,7 @@ ep_basic = 5 # number of episodes = number of trials
 episode_maxtime = 3 # in seconds
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
 block_num = 1 #number of blocks
-variation = 1 # variation options: 1 or 2 
+variation = 2 # variation options: 1 or 2 
 target_name = "Bullseye" #enter the Target Actors name like Bullseye, DoomImp, Cacodemon, etc
 
 ########################################################################################################################################
@@ -328,9 +328,9 @@ for b in range(block_num):
     # makes the game window visible, as humans do play it
     game.set_window_visible(True)
     # If the hud (available ammo, health, etc.) is visible
-    game.set_render_hud(True)
+    game.set_render_hud(False)
     # set an async spectator mode, so the agent (computer) watches and the human get's to play
-    game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
+    game.set_mode(vzd.Mode.ASYNC_SPECTATOR) 
     #set the ticrate (frames per second = ingame time)
     game.set_ticrate(ticrate_basic)
     # set the maximum time of the game in tics
@@ -384,17 +384,27 @@ for b in range(block_num):
         while not game.is_episode_finished():
             state = game.get_state()
             game.advance_action()
+            Eptime = game.get_episode_time()
             
         print("Episode finished!")
         print("Total reward:", game.get_total_reward())
         print("************************")
+        EpisodeReward = game.get_total_reward()
+
+        if game.is_episode_finished():
+
+            win = visual.Window(
+            color='black',
+            fullscr=True)
+            msg = visual.TextStim(win, text=f"Punkte: {EpisodeReward}")
+            msg.draw()
+            win.flip()
+            core.wait(1)
+            win.close()
 
         #track movement choices
-        movement_type_arr[i]= movement_type
-
-        
-
-        time.sleep(0.5)
+        movement_type_arr[i]= movement_type       
+        time.sleep(0.1)
         
     # buffer-episode: needed as the last episode isn't recorded
     game.new_episode()
