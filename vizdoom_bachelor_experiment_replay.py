@@ -134,10 +134,14 @@ with open('game_data.tsv', 'r') as tsvfile:
                     game = vzd.DoomGame()
                     game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
                     game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/experiment.cfg")
-                    game.set_window_visible(False)
+                    game.set_window_visible(True)
+                    # Set screen size
+                    game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
+                    # If the hud (available ammo, health, etc.) is visible
+                    game.set_render_hud(False)
                     game.set_objects_info_enabled(True)
                     game.set_sectors_info_enabled(True)
-                    game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
+                    game.set_mode(vzd.Mode.ASYNC_SPECTATOR) #trying spectator instead of async
                     game.set_ticrate(ticrate_basic)
                     game.init()
 
