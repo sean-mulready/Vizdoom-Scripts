@@ -371,9 +371,9 @@ for b in range(block_num):
         #as data seems to show, that costs 2 Tics in time with ticrate set to 50
         if not game.is_episode_finished():
 
-            target_position = None #initialize as none
+            target_position = 0 #initialize as none
 
-            while target_position is None:
+            while target_position == 0 and state.number < 100 :   #breaking after 100 tics latest prevents crashing if target doesn't spawn at all
         
                 state = game.get_state()
 
