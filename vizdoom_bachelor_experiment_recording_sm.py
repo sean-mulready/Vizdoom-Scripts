@@ -14,16 +14,16 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '31'           # ongoing numerizing as string
+sub_num = '77'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
-sex = 'o'            # sex as string (m = male, f=female, nb = non-binary, o = other)
+sex = 'o'               # sex as string (m = male, f=female, o = other)
 handedness = 'left'     # handedness as left or right (string)
 glasses = False          # as boolean
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
-ep_basic = 5 # number of episodes = number of trials
-episode_maxtime = 3 # in seconds
+ep_basic = 2 # number of episodes = number of trials
+episode_maxtime = 4 # in seconds, always add one second as the spawning is delayed!
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
 block_num = 1 #number of blocks
 variation = 2 # variation options: 1 or 2 
@@ -171,8 +171,7 @@ img_dir = os.getcwd() + "/exp_img/"
 instructions_greeting = {
     'greeting 1': {'image': os.path.join(img_dir, "instructions_greeting1.jpg"), 'image_size': (1.8,1.6)},
     'greeting 2': {'image': os.path.join(img_dir, "instructions_greeting2.jpg"), 'image_size': (1.8,1.6)},
-    'greeting 3': {'image': os.path.join(img_dir, "instructions_greeting_3_bachelor.jpg"), 'image_size': (1.8,1.6)},
-    'greeting 4': {'image': os.path.join(img_dir, "instructions_greeting_4_bachelor.jpg"), 'image_size': (1.8,1.6)}
+    'greeting 3': {'image': os.path.join(img_dir, "instructions_greeting_3_bachelor.jpg"), 'image_size': (1.8,1.6)}
 }
 # Iterate over instructions
 for instruction_key, instruction_data in instructions_greeting.items():
@@ -209,12 +208,16 @@ instructions_basic = {
     'begin_1': {'image': os.path.join(img_dir, "instructions_begin.jpg"), 'image_size': (1.8,1.6)},
     'basic_goal': {'image': os.path.join(img_dir, "instructions_basic_target.jpg"), 'image_size': (1.8,1.6)},
     'basic_control': {'image': os.path.join(img_dir, "instructions_basic_control.jpg"), 'image_size': (1.8,1.6)},
+    'basic_trial_steps': {'image': os.path.join(img_dir, "instructions_basic_trial_steps.jpg"), 'image_size': (1.8,1.6)},
+    'basic_trial_start_appearing': {'image': os.path.join(img_dir, "instructions_basic_start_appearing.jpg"), 'image_size': (1.8,1.6)},
+    'basic_trial_align': {'image': os.path.join(img_dir, "instructions_basic_align.jpg"), 'image_size': (1.8,1.6)},
+    'basic_trial_reward': {'image': os.path.join(img_dir, "instructions_basic_reward.jpg"), 'image_size': (1.8,1.6)},
     'basic_inversion': {'image': os.path.join(img_dir, "instructions_basic_inversion_target.jpg"), 'image_size': (1.8,1.6)},
     'basic_probabilities': {'image': os.path.join(img_dir, "instructions_basic_movement_probabilities.jpg"), 'image_size': (1.8,1.6)},
-    'basic_important_note': {'image': os.path.join(img_dir, "instructions_basic_important_note.jpg"), 'image_size': (1.8,1.6)},
-    'basic_ep_info': {'text': f'Erschießen Sie so schnell wie möglich das Ziel! \n' \
+    'basic_note_missing_target': {'image': os.path.join(img_dir, "instructions_basic_note_missing_target.jpg"), 'image_size': (1.8,1.6)},
+    'basic_ep_info': {'text': f'Schießen Sie so schnell wie möglich auf das Ziel! \n' \
                       f'Sie werden {block_num} Blöcke mit je {ep_basic} Durchgängen spielen. \n' \
-                      f'Sie haben {episode_maxtime} Sekunden Zeit pro Durchlauf \n\n' \
+                      f'Sie haben ab Erscheinen des Ziels {episode_maxtime-1} Sekunden Zeit und einen Schuss pro Durchlauf \n\n' \
                       f'Bitte LEERTASTE drücken, um fortzufahren'}
     
 
@@ -344,7 +347,15 @@ for b in range(block_num):
 
     # implementing the array for tracking the movement type (normal or inverted)
     movement_type_arr = np.full(ep_basic, np.nan, dtype = np.int32)
+    # buffer-episode: needed as the last episode isn't recorded
+    game.new_episode()
 
+    while not game.is_episode_finished():
+        
+            state = game.get_state()
+
+            if state.number > 0:
+                break
     # Loop through episodes
     for i in range(ep_basic):
         
@@ -352,25 +363,29 @@ for b in range(block_num):
         #start the recording
         filename = f"{sub_num}_b{b+1}_e{i+1}_basic_rec.lmp"
         game.new_episode(filename)
-
+        start_time = time.time()
 
         #to get the state and in the next step the object_info
         #to be able to determine the movement we need to go into 
         #the game (if not...) before going into the game (while not..)
         #as data seems to show, that costs 2 Tics in time with ticrate set to 50
-
         if not game.is_episode_finished():
+
+            target_position = None #initialize as none
+
+            while target_position is None:
         
-            state = game.get_state()
+                state = game.get_state()
 
-            #getting the targets' position for
-            #movement-determination
-            for o in state.objects:
-                if o.name == target_name:
-                    target_position = o.position_y
-                
-                    break 
-
+                #getting the targets' position for
+                #movement-determination
+            
+                for o in state.objects:
+                    if o.name == target_name:
+                        target_position = o.position_y
+                        break
+                game.advance_action()
+                    
             movement_type = movement_probabilities(target_position,variation)
             
             # bind keys according to result of the decision
@@ -384,10 +399,11 @@ for b in range(block_num):
         while not game.is_episode_finished():
             state = game.get_state()
             game.advance_action()
-            Eptime = game.get_episode_time()
+            print(f"Tics: {game.get_episode_time()}")
             
         print("Episode finished!")
         print("Total reward:", game.get_total_reward())
+        print(f"Time: {time.time() - start_time}")
         print("************************")
         EpisodeReward = game.get_total_reward()
 
@@ -498,10 +514,9 @@ win = visual.Window(
 present_text(window_instance=win,
                     instr_text='Vielen Dank für Ihre Teilnahme! \n' \
                         'Das Experiment ist nun abgeschlossen. \n' \
-                        'Wenn Sie am Ende dazu aufgefordert werden, drücken Sie' \
-                            ' ein letztes Mal die LEERTASTE, der Bildschirm wird daraufhin schwarz.'\
-                                'Anschließend geben Sie der Versuchsleitung Bescheid. Vielen Dank \n\n'\
-                                    'Drücken Sie bitte jetzt die LEERTASTE')
+                        'Bitte verlassen Sie nun den Computer und geben der ' \
+                        'Versuchsleitung Bescheid. Vielen Dank!'
+            )
 
 win.close()
         

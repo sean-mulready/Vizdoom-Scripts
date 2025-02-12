@@ -18,6 +18,65 @@ import os
 import csv
 import time
 import re
+from psychopy import core, visual, event
+
+
+# presenting the instructions
+def present_text(window_instance,
+                 instr_text='placeholder',
+                 text_size=0.075,
+                 instructions=True,
+                 text_position=(0., 0.),
+                 unit='norm',
+                 continue_key='space',
+                 image=None,
+                 image_size=None):
+    
+    # Calculate default text position
+    default_text_position = (0., 0.)
+    
+    # Check if only image is provided
+    if instr_text == 'placeholder' and image:
+        # Draw the image stimulus at the center
+        image_position = (0., 0)
+        if image_size:
+            image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=image_size)
+        else:
+            image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=(0.5, 0.5))  # Default size
+        image_stim.draw()
+    
+    else:
+        # Draw the text stimulus if text is provided
+        if instr_text != 'placeholder':
+            if image:  # If both text and image are present
+                text_position = (0., 0.5)  # Position above the center
+            else:
+                text_position = default_text_position  # Center position if only text is present
+                
+            text_stim = visual.TextStim(window_instance, 
+                                        height=text_size, 
+                                        units=unit, 
+                                        pos=text_position,
+                                        wrapWidth=1.5
+                                    )
+            text_stim.setText(instr_text)
+            text_stim.draw()
+
+        # Draw the image stimulus if image is provided
+        if image:
+            image_position = (0, -0.5)  # Position below the center
+            if image_size:
+                image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=image_size)
+            else:
+                image_stim = visual.ImageStim(window_instance, image, pos=image_position, size=(0.5, 0.5))  # Default size
+            image_stim.draw()
+    
+    window_instance.flip()
+    
+    if instructions:
+        event.waitKeys(keyList=[continue_key])
+    else:
+        core.wait(3)
 
 # Function to extract numbers from filenames
 def extract_numbers_from_filename(filename):
@@ -66,6 +125,19 @@ else:
         
 # Load existing entries from the final file to avoid duplication
 existing_entries = load_existing_entries('checking_file.tsv')
+
+# window
+screen_size = [1920, 1080]
+win = visual.Window(
+        color='black',
+        size=[1920, 1080],
+        fullscr=True)
+# a blank black screen for the background. 
+present_text(window_instance = win,
+                instr_text= '',
+                instructions = False
+                )
+
 
 # Open the TSV file and compare
 with open('game_data.tsv', 'r') as tsvfile:
@@ -129,7 +201,6 @@ with open('game_data.tsv', 'r') as tsvfile:
 
 
                     
-
                     # Start the VizDoom game
                     game = vzd.DoomGame()
                     game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
@@ -141,9 +212,8 @@ with open('game_data.tsv', 'r') as tsvfile:
                     game.set_render_hud(False)
                     game.set_objects_info_enabled(True)
                     game.set_sectors_info_enabled(True)
-                    game.set_mode(vzd.Mode.ASYNC_SPECTATOR) 
+                    game.set_mode(vzd.Mode.ASYNC_SPECTATOR) #trying spectator instead of async
                     game.set_ticrate(ticrate_basic)
-                    game.set_episode_start_time(50)
                     game.init()
 
                     def translate_action(last_action):
@@ -171,7 +241,7 @@ with open('game_data.tsv', 'r') as tsvfile:
                         last_action = game.get_last_action()
                         reward = game.get_last_reward()
                         last_action_trnsl = translate_action(last_action)
-                        print(f"Tics: {game.get_episode_time()}")
+
                         cumulative_reward += reward
                         current_time = game.get_episode_time() * (1 / ticrate_basic)
                         object_ids = []
@@ -218,7 +288,6 @@ with open('game_data.tsv', 'r') as tsvfile:
                                 row.extend([None, None, None, None, None])
                             
                         csv_writer.writerow(row)
-                        time.sleep(0.001) #trying little sleeps between steps to solve inaccuracy
                     
                     # write the header lines aka the column names
                     with open('column_data.tsv','w',newline='') as header_file:
