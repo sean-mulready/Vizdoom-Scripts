@@ -14,7 +14,7 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '77'           # ongoing numerizing as string
+sub_num = '111'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
 sex = 'o'               # sex as string (m = male, f=female, o = other)
 handedness = 'left'     # handedness as left or right (string)
@@ -22,11 +22,11 @@ glasses = False          # as boolean
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
-ep_basic = 2 # number of episodes = number of trials
-episode_maxtime = 4 # in seconds, always add one second as the spawning is delayed!
+ep_basic = 5 # number of episodes = number of trials
+episode_maxtime = 6 # in seconds, always add one second as the spawning is delayed!
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
-block_num = 1 #number of blocks
-variation = 2 # variation options: 1 or 2 
+block_num = 4 #number of blocks
+variation = 1 # variation options: 1 or 2 
 target_name = "Bullseye" #enter the Target Actors name like Bullseye, DoomImp, Cacodemon, etc
 
 ########################################################################################################################################
@@ -93,7 +93,9 @@ else:
 def present_text(window_instance,
                  instr_text='placeholder',
                  text_size=0.075,
-                 instructions=True,
+                 instructions=False,
+                 break_offering=False,
+                 block_start=False,
                  text_position=(0., 0.),
                  unit='norm',
                  continue_key='space',
@@ -143,6 +145,10 @@ def present_text(window_instance,
     
     if instructions:
         event.waitKeys(keyList=[continue_key])
+    elif break_offering:
+        event.waitKeys(maxWait = 300, keyList=[continue_key])  # break ends latest after 5 mins
+    elif block_start:
+        event.waitKeys(maxWait = 60, keyList=[continue_key]) #block starts latest after 1 min
     else:
         core.wait(0.01)
 
@@ -288,6 +294,7 @@ for b in range(block_num):
             fullscr=True)
 
     present_text(window_instance=win,
+                 block_start = True,
                     instr_text=f'Starte Block {b + 1} von {block_num}  \n\n' \
                         'LEERTASTE um zu beginnen ...',
                         continue_key=continue_key)
@@ -336,8 +343,7 @@ for b in range(block_num):
     game.set_mode(vzd.Mode.ASYNC_SPECTATOR) 
     #set the ticrate (frames per second = ingame time)
     game.set_ticrate(ticrate_basic)
-    # set the maximum time of the game in tics
-    game.set_episode_timeout(episode_maxtime*ticrate_basic)
+    
 
     # Initialize the game
     game.init()
@@ -347,17 +353,12 @@ for b in range(block_num):
 
     # implementing the array for tracking the movement type (normal or inverted)
     movement_type_arr = np.full(ep_basic, np.nan, dtype = np.int32)
-    # buffer-episode: needed as the last episode isn't recorded
-    game.new_episode()
-
-    while not game.is_episode_finished():
-        
-            state = game.get_state()
-
-            if state.number > 0:
-                break
+   
     # Loop through episodes
     for i in range(ep_basic):
+
+        # set the maximum time of the game in tics
+        game.set_episode_timeout(episode_maxtime*ticrate_basic)
         
         print("Episode #" + str(i + 1))
         #start the recording
@@ -370,10 +371,11 @@ for b in range(block_num):
         #the game (if not...) before going into the game (while not..)
         #as data seems to show, that costs 2 Tics in time with ticrate set to 50
         if not game.is_episode_finished():
-
+            
+            #state = game.get_state()
             target_position = 0 #initialize as none
 
-            while target_position == 0 and state.number < 100 :   #breaking after 100 tics latest prevents crashing if target doesn't spawn at all
+            while target_position == 0 and game.get_episode_time() < 200 :   #breaking after 200 tics latest prevents crashing if target doesn't spawn at all
         
                 state = game.get_state()
 
@@ -383,6 +385,7 @@ for b in range(block_num):
                 for o in state.objects:
                     if o.name == target_name:
                         target_position = o.position_y
+                        print(f'target at {target_position}')
                         break
                 game.advance_action()
                     
@@ -395,12 +398,38 @@ for b in range(block_num):
             else:
                 game.send_game_command("bind A +moveleft")
                 game.send_game_command("bind D +moveright")
+        
+        # Variables for tracking the first action and time of incorrect movement
+        first_action = None
+        incorrect_action_time = None
         # game will stop after defined maxTime 
         while not game.is_episode_finished():
             state = game.get_state()
             game.advance_action()
-            print(f"Tics: {game.get_episode_time()}")
             
+            # need the following: checking for the first movement action and in relation to side need to stop episode 1 (0.5) second after wrong movement
+            last_action = game.get_last_action()
+            current_time = game.get_episode_time()  # Get current episode time in tics
+
+            # for the case that target is missed, episode ends latest 0.5 seconds after shooting
+            if last_action == [0.0,0.0,1.0]:
+                missed_shot = current_time + 25 # set the new time to 25 tics after shooting
+                game.set_episode_timeout(missed_shot)
+
+            # Find the first non-default action
+            if first_action is None and last_action != ([0.0,0.0,0.0] or [0.0,0.0,1.0]) :
+                first_action = last_action
+                print(first_action)
+                print(target_position)
+
+                # Check if the action is incorrect
+                if (target_position >= 75 and first_action == [0.0, 1.0, 0.0]) or (target_position <= -9 and first_action == [1.0, 0.0, 0.0]):
+                        incorrect_action_time = current_time + 25  # Stop after 25 more tics so 0.5 seconds
+                        game.set_episode_timeout(incorrect_action_time)  # Set new timeout, 
+
+            
+
+
         print("Episode finished!")
         print("Total reward:", game.get_total_reward())
         print(f"Time: {time.time() - start_time}")
@@ -494,7 +523,7 @@ for b in range(block_num):
         fullscr=True)
         present_text(win, 
                 image = os.path.join(img_dir, "instructions_break_offering.jpg"),
-                instructions=True,
+                break_offering = True,
                 continue_key=continue_key,
                 image_size=(1.8,1.6),  # Pass image size to present_text function
                 )
