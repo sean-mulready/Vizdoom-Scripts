@@ -36,7 +36,7 @@ for (s in sub_list){
     for (file in block_files){
       current_blockfile <- read.csv(file, sep = "\t") #read the tsv-file
       needed_data <- current_blockfile %>%
-        select(Subject, Block, Episode,State,Tic, Time, Action, Movement, Variation, X0_y, X0_name)  # Only keep relevant columns
+        select(Subject, Block, Episode,State,Tic, Time, Action, Movement, Variation, X1_y, X1_name)  # Only keep relevant columns
       # ensure specific data is the right datatype  
       needed_data$Subject <- as.integer(needed_data$Subject) #sub number
       needed_data$Block <- as.integer(needed_data$Block) #block number
@@ -46,9 +46,9 @@ for (s in sub_list){
       needed_data$Movement <- as.integer(needed_data$Movement) #movement as int
       needed_data$Tic <- as.integer(needed_data$Tic)# tic as int
       needed_data$Time <- as.numeric(needed_data$Time)# time as numeric
-      needed_data$X0_y <- as.numeric(needed_data$X0_y)# X0_y as numeric
+      needed_data$X1_y <- as.numeric(needed_data$X1_y)# X1_y as numeric
       needed_data <- needed_data %>%
-        filter(Subject != "invalid number" | is.na(X0_y))
+        filter(Subject != "invalid number" | is.na(X1_y))
       #View(needed_data)
 
       #all the functions needed for further processing
@@ -83,13 +83,9 @@ for (s in sub_list){
       #function to check if the movement choice was correct
 
       correct_choice <- function(movement,position, action){
-        if (movement == 0 && position == "left" && action == "MOVE_LEFT"){ #normal, left side, MOVE_LEFT is correct
+        if (position == "left" && action == "MOVE_LEFT"){ #left side, MOVE_LEFT is correct
           return(TRUE)
-        }else if (movement == 0 && position == "right" && action == "MOVE_RIGHT"){ # normal, right side, MOVE_RIGHT is correct
-          return(TRUE)
-        }else if (movement == 1 && position == "left" && action == "MOVE_RIGHT"){ # inverted, left side, MOVE_RIGHT is correct
-          return(TRUE)
-        } else if (movement == 1 && position == "right" && action == "MOVE_LEFT"){  # inverted, right side, MOVE_LEFT is correct
+        }else if (position == "right" && action == "MOVE_RIGHT"){ # right side, MOVE_RIGHT is correct
           return(TRUE)
         }else {   # everything else is incorrect
           return(FALSE)
@@ -144,20 +140,20 @@ for (s in sub_list){
             NA
           },
       
-          X0_y = if (!is.na(first_non_na_index) && first_non_na_index > 0) {
-            X0_y[first_non_na_index]
+          X1_y = if (!is.na(first_non_na_index) && first_non_na_index > 0) {
+            X1_y[first_non_na_index]
           } else {
             NA
           },
       
           side = if (!is.na(first_non_na_index) && first_non_na_index > 0) {
-            target_side(X0_y)
+            target_side(X1_y)
           } else {
             NA
           },
 
           correct_choice = if (!is.na(first_non_na_index) && first_non_na_index > 0) {
-            correct_choice(Movement, side, First_Action)
+            correct_choice(side, First_Action)
           } else {
             NA
           },
@@ -182,7 +178,7 @@ for (s in sub_list){
           Time_of_Episode = max(Time),
 
           #Was the traget hit?
-          Hit = any(grepl("^Dead", X0_name))
+          Hit = any(grepl("^Dead", X1_name))
         ) %>%
         filter(if_all(everything(), ~ . != "invalid number")) %>% #kick out all the rows with invalid numbers
         ungroup()
