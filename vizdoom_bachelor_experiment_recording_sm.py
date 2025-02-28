@@ -541,6 +541,7 @@ win = visual.Window(
     fullscr=True)
 
 present_text(window_instance=win,
+             instructions = True,
                     instr_text='Vielen Dank für Ihre Teilnahme! \n' \
                         'Das Experiment ist nun abgeschlossen. \n' \
                         'Bitte verlassen Sie nun den Computer und geben der ' \
