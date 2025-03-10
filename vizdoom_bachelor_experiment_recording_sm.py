@@ -14,7 +14,7 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '111'           # ongoing numerizing as string
+sub_num = '130'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
 sex = 'o'               # sex as string (m = male, f=female, o = other)
 handedness = 'left'     # handedness as left or right (string)
@@ -22,16 +22,26 @@ glasses = False          # as boolean
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
-ep_basic = 5 # number of episodes = number of trials
+ep_basic = 2 # number of episodes = number of trials
 episode_maxtime = 6 # in seconds, always add one second as the spawning is delayed!
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
 block_num = 4 #number of blocks
-variation = 1 # variation options: 1 or 2 
+#variation = 1 # variation options: 1 or 2 
 target_name = "Bullseye" #enter the Target Actors name like Bullseye, DoomImp, Cacodemon, etc
 
 ########################################################################################################################################
 ########################################################################################################################################
 
+# specify number of blocks, make sure it's even
+if block_num % 2 == 0:
+    None
+elif block_num %2 != 0:
+    block_num = (block_num+1)
+
+# create random list of the two varations 
+
+var_shuffle = int(block_num/2)*[1,2]
+np.random.shuffle(var_shuffle)
 
 # File path
 filename = 'subjects.tsv'
@@ -350,10 +360,13 @@ for b in range(block_num):
 
     # RECORDING
 
-
+    # using randomized variations
+    variation = var_shuffle.pop(0)
+    print(variation)
     # implementing the array for tracking the movement type (normal or inverted)
     movement_type_arr = np.full(ep_basic, np.nan, dtype = np.int32)
-   
+    # implement Total Reward of Block:
+    block_total_reward = 0 
     # Loop through episodes
     for i in range(ep_basic):
 
@@ -434,14 +447,17 @@ for b in range(block_num):
         print("Total reward:", game.get_total_reward())
         print(f"Time: {time.time() - start_time}")
         print("************************")
+        # Adding Episode Reward to Block Reward
         EpisodeReward = game.get_total_reward()
+        block_total_reward = (block_total_reward + game.get_total_reward())
 
         if game.is_episode_finished():
 
             win = visual.Window(
             color='black',
             fullscr=True)
-            msg = visual.TextStim(win, text=f"Punkte: {EpisodeReward}")
+            msg = visual.TextStim(win, text=f"Punkte: {int(EpisodeReward)} \n\n\n" \
+                                  f"Total: {int(block_total_reward)}")
             msg.draw()
             win.flip()
             core.wait(1)
