@@ -14,7 +14,7 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '130'           # ongoing numerizing as string
+sub_num = '141'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
 sex = 'o'               # sex as string (m = male, f=female, o = other)
 handedness = 'left'     # handedness as left or right (string)
@@ -22,10 +22,10 @@ glasses = False          # as boolean
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
-ep_basic = 2 # number of episodes = number of trials
+ep_basic = 50 # number of episodes = number of trials
 episode_maxtime = 6 # in seconds, always add one second as the spawning is delayed!
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
-block_num = 4 #number of blocks
+block_num = 6 #number of blocks
 #variation = 1 # variation options: 1 or 2 
 target_name = "Bullseye" #enter the Target Actors name like Bullseye, DoomImp, Cacodemon, etc
 
@@ -216,11 +216,9 @@ present_text(window_instance = win,
              )
 
 
+##### Basic instructions Part 1 ############
 
-
-##### Basic instructions
-#needs to be worked on!!!!!!########################################
-instructions_basic = {
+instructions_basic_1 = {
     'begin_1': {'image': os.path.join(img_dir, "instructions_begin.jpg"), 'image_size': (1.8,1.6)},
     'basic_goal': {'image': os.path.join(img_dir, "instructions_basic_target.jpg"), 'image_size': (1.8,1.6)},
     'basic_control': {'image': os.path.join(img_dir, "instructions_basic_control.jpg"), 'image_size': (1.8,1.6)},
@@ -229,18 +227,14 @@ instructions_basic = {
     'basic_trial_align': {'image': os.path.join(img_dir, "instructions_basic_align.jpg"), 'image_size': (1.8,1.6)},
     'basic_trial_reward': {'image': os.path.join(img_dir, "instructions_basic_reward.jpg"), 'image_size': (1.8,1.6)},
     'basic_inversion': {'image': os.path.join(img_dir, "instructions_basic_inversion_target.jpg"), 'image_size': (1.8,1.6)},
-    'basic_probabilities': {'image': os.path.join(img_dir, "instructions_basic_movement_probabilities.jpg"), 'image_size': (1.8,1.6)},
-    'basic_note_missing_target': {'image': os.path.join(img_dir, "instructions_basic_note_missing_target.jpg"), 'image_size': (1.8,1.6)},
-    'basic_ep_info': {'text': f'Schießen Sie so schnell wie möglich auf das Ziel! \n' \
-                      f'Sie werden {block_num} Blöcke mit je {ep_basic} Durchgängen spielen. \n' \
-                      f'Sie haben ab Erscheinen des Ziels {episode_maxtime-1} Sekunden Zeit und einen Schuss pro Durchlauf \n\n' \
-                      f'Bitte LEERTASTE drücken, um fortzufahren'}
-    
-
+    'basic_training_start': {'text': f'Um Sie mit der Steuerung vertraut zu machen, werden Sie nun zwei Blöcke mit je 10 Durchläufen spielen. \n' \
+                                     f'Der erste Block wird mit normaler Steuerung sein, der zweite Block mit invertierter Steuerung. \n\n' \
+                                     f'Bitte LEERTASTE drücken, um fortzufahren'},
+    'basic_note_missing_target': {'image': os.path.join(img_dir, "instructions_basic_note_missing_target.jpg"), 'image_size': (1.8,1.6)}
 }
 
-# Iterate over instructions
-for instruction_key, instruction_data in instructions_basic.items():
+# Iterate over instructions 1 until training blocks
+for instruction_key, instruction_data in instructions_basic_1.items():
     image_size = instruction_data.get('image_size')  # Get image size if specified
     # Check if the instruction has text or not
     if 'text' in instruction_data:
@@ -264,6 +258,288 @@ present_text(window_instance = win,
              instr_text= '',
              instructions = False
              )
+
+#training blocks
+
+training_ep = 10
+
+#normal movement
+
+#instructions for the normal movement here currently testing instructions
+
+
+win = visual.Window(
+        color='black',
+        size=[1920, 1080],
+        fullscr=True)
+
+present_text(window_instance=win,
+                block_start = True,
+                instr_text=f'Starte Trainingsblock mit normaler Steuerung  \n\n' \
+                    'LEERTASTE um zu beginnen ...',
+                    continue_key=continue_key)
+
+win.close()
+
+# start training for normal movement
+
+
+game = vzd.DoomGame()
+# where to get the .ini-file from
+game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
+
+
+# loading the config file. Created my own which relates to my own experiment.wad
+# with customized map and spwaning ranges for the target
+game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/experiment.cfg")
+
+# Enables information about all objects present in the current episode/level.
+game.set_objects_info_enabled(True)
+
+# Enables information about all sectors (map layout).
+game.set_sectors_info_enabled(True)
+
+# Clear all game variables first to unify the variables for all scenarios
+game.clear_available_game_variables()
+
+# Add game variables for Health and Ammo
+game.add_available_game_variable(vzd.GameVariable.HEALTH)
+game.add_available_game_variable(vzd.GameVariable.AMMO2)
+
+# Add Game Variables for the position
+pos_x = game.add_available_game_variable(vzd.GameVariable.POSITION_X)
+pos_y = game.add_available_game_variable(vzd.GameVariable.POSITION_Y)
+pos_z = game.add_available_game_variable(vzd.GameVariable.POSITION_Z)
+angle = game.add_available_game_variable(vzd.GameVariable.ANGLE)
+
+# Set screen size
+game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
+
+# makes the game window visible, as humans do play it
+game.set_window_visible(True)
+# If the hud (available ammo, health, etc.) is visible
+game.set_render_hud(False)
+# set an async spectator mode, so the agent (computer) watches and the human get's to play
+game.set_mode(vzd.Mode.ASYNC_SPECTATOR) 
+#set the ticrate (frames per second = ingame time)
+game.set_ticrate(ticrate_basic)
+
+
+
+# Initialize the game
+game.init()
+
+#normal movement
+game.send_game_command("bind A +moveleft")
+game.send_game_command("bind D +moveright")
+
+
+# implement Total Reward of Block:
+block_total_reward = 0 
+# Loop through episodes
+for i in range(training_ep):
+
+    # set the maximum time of the game in tics
+    game.set_episode_timeout(episode_maxtime*ticrate_basic)
+    
+    print("Episode #" + str(i + 1))
+    game.new_episode()
+
+    while not game.is_episode_finished():
+
+        state = game.get_state()
+        game.advance_action()
+
+    print("Episode finished!")
+    print("Total reward:", game.get_total_reward())
+    print("************************")
+    # Adding Episode Reward to Block Reward
+    EpisodeReward = game.get_total_reward()
+    block_total_reward = (block_total_reward + game.get_total_reward())
+
+    if game.is_episode_finished():
+
+        win = visual.Window(
+        color='black',
+        fullscr=True)
+        msg = visual.TextStim(win, text=f"Punkte: {int(EpisodeReward)} \n\n\n" \
+                                f"Total: {int(block_total_reward)}")
+        msg.draw()
+        win.flip()
+        core.wait(1)
+        win.close()
+
+game.close()
+
+# intersection instructions 
+
+win = visual.Window(
+        color='black',
+        size=[1920, 1080],
+        fullscr=True)
+
+present_text(window_instance=win,
+                block_start = True,
+                instr_text=f'Sehr gut! Und weiter gehts !  \n\n' \
+                    'LEERTASTE um fortzufahren ...',
+                    continue_key=continue_key)
+
+win.close()
+
+win = visual.Window(
+        color='black',
+        size=[1920, 1080],
+        fullscr=True)
+
+present_text(window_instance=win,
+                block_start = True,
+                instr_text=f'Starte Trainingsblock mit invertierter Steuerung  \n\n' \
+                    'LEERTASTE um zu beginnen ...',
+                    continue_key=continue_key)
+
+win.close()
+
+# start training for inverted movement
+
+game = vzd.DoomGame()
+# where to get the .ini-file from
+game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
+
+
+# loading the config file. Created my own which relates to my own experiment.wad
+# with customized map and spwaning ranges for the target
+game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/experiment.cfg")
+
+# Enables information about all objects present in the current episode/level.
+game.set_objects_info_enabled(True)
+
+# Enables information about all sectors (map layout).
+game.set_sectors_info_enabled(True)
+
+# Clear all game variables first to unify the variables for all scenarios
+game.clear_available_game_variables()
+
+# Add game variables for Health and Ammo
+game.add_available_game_variable(vzd.GameVariable.HEALTH)
+game.add_available_game_variable(vzd.GameVariable.AMMO2)
+
+# Add Game Variables for the position
+pos_x = game.add_available_game_variable(vzd.GameVariable.POSITION_X)
+pos_y = game.add_available_game_variable(vzd.GameVariable.POSITION_Y)
+pos_z = game.add_available_game_variable(vzd.GameVariable.POSITION_Z)
+angle = game.add_available_game_variable(vzd.GameVariable.ANGLE)
+
+# Set screen size
+game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
+
+# makes the game window visible, as humans do play it
+game.set_window_visible(True)
+# If the hud (available ammo, health, etc.) is visible
+game.set_render_hud(False)
+# set an async spectator mode, so the agent (computer) watches and the human get's to play
+game.set_mode(vzd.Mode.ASYNC_SPECTATOR) 
+#set the ticrate (frames per second = ingame time)
+game.set_ticrate(ticrate_basic)
+
+
+
+
+# Initialize the game
+game.init()
+
+#inverted movement
+game.send_game_command("bind D +moveleft")
+game.send_game_command("bind A +moveright")
+
+# implement Total Reward of Block:
+block_total_reward = 0 
+# Loop through episodes
+for i in range(training_ep):
+
+    # set the maximum time of the game in tics
+    game.set_episode_timeout(episode_maxtime*ticrate_basic)
+    
+    print("Episode #" + str(i + 1))
+    game.new_episode()
+    
+
+   
+    while not game.is_episode_finished():
+
+        state = game.get_state()
+        game.advance_action()
+                
+    print("Episode finished!")
+    print("Total reward:", game.get_total_reward())
+    print("************************")
+
+    # Adding Episode Reward to Block Reward
+    EpisodeReward = game.get_total_reward()
+    block_total_reward = (block_total_reward + game.get_total_reward())
+
+    if game.is_episode_finished():
+
+        win = visual.Window(
+        color='black',
+        fullscr=True)
+        msg = visual.TextStim(win, text=f"Punkte: {int(EpisodeReward)} \n\n\n" \
+                                f"Total: {int(block_total_reward)}")
+        msg.draw()
+        win.flip()
+        core.wait(1)
+        win.close()
+
+game.close()
+
+# Final instructions before the experiment
+
+
+instructions_basic_2 = {
+
+    'basic_good_job': {'text': f'Sehr gut! Damit kann das Experiment starten !  \n\n' \
+                    'LEERTASTE um fortzufahren ...'},
+    'basic_probabilities': {'image': os.path.join(img_dir, "instructions_basic_movement_probabilities.jpg"), 'image_size': (1.8,1.6)},
+    'basic_note_missing_target': {'image': os.path.join(img_dir, "instructions_basic_note_missing_target.jpg"), 'image_size': (1.8,1.6)},
+    'basic_ep_info': {'text': f'Schießen Sie so schnell wie möglich auf das Ziel! \n' \
+                      f'Sie werden {block_num} Blöcke mit je {ep_basic} Durchgängen spielen. \n' \
+                      f'Sie haben ab Erscheinen des Ziels {episode_maxtime-1} Sekunden Zeit und einen Schuss pro Durchlauf \n\n' \
+                      f'Bitte LEERTASTE drücken, um fortzufahren'}
+   
+}
+
+
+# window
+win = visual.Window(
+        color='black',
+        size=[1920, 1080],
+        fullscr=True)
+
+# Iterate over instructions 2 and then start experiment
+for instruction_key, instruction_data in instructions_basic_2.items():
+    image_size = instruction_data.get('image_size')  # Get image size if specified
+    # Check if the instruction has text or not
+    if 'text' in instruction_data:
+        present_text(win, 
+                     instr_text=instruction_data['text'], 
+                     image=instruction_data.get('image'),
+                     instructions=True,
+                     continue_key=continue_key,
+                     image_size=image_size,  # Pass image size to present_text function
+                     )
+    else:
+        present_text(win, 
+                     image=instruction_data.get('image'),
+                     instructions=True,
+                     continue_key=continue_key,
+                     image_size=image_size,  # Pass image size to present_text function
+                     )
+        
+# a blank black screen for the background. 
+present_text(window_instance = win,
+             instr_text= '',
+             instructions = False
+             )
+
 
 # deciding the movement probabilities
 # for each variation, there is an optimal choice, so one key where
@@ -565,5 +841,6 @@ present_text(window_instance=win,
             )
 
 win.close()
-        
+
+game.close()
 

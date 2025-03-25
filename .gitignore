@@ -3,5 +3,7 @@
 *.lmp
 *.pdf
 *.tsv
+*.pptx
+*Zone.Identifier
 data/
 sub*/

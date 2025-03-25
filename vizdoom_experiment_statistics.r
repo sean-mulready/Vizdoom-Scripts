@@ -141,7 +141,7 @@ for (s in sub_list){
           },
       
           X1_y = if (!is.na(first_non_na_index) && first_non_na_index > 0) {
-            X1_y[first_non_na_index]
+            first(na.omit(X1_y))#X1_y[first_non_na_index] # need to change. in case of movement before target appears this value is NA either way
           } else {
             NA
           },

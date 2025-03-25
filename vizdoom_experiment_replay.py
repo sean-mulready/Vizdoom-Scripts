@@ -4,7 +4,7 @@
 # when the lmp-files are replayed and data is extracted
 # - checks, if files have already been processed and skips them 
 # - replays the lmp-files, extracts game data, saves it togehter with the data
-# that has been stored in the sub-file, like the balance per block and the movement-choice
+# that has been stored in the sub-file, like the variation per block and the movement-choice
 # per episode
 # - it stores the data blockwise in folders which are created for every Subject
 # Need to clean the code: look for unnecessary things
@@ -17,12 +17,11 @@ import vizdoom as vzd
 import os 
 import csv
 import time
-import numpy as np
 import re
 
 # Function to extract numbers from filenames
 def extract_numbers_from_filename(filename):
-    pattern = r'_b|_e|_|\.'  # Change your pattern here if needed
+    pattern = r'_b|_e|_|\.'  
     split_result = re.split(pattern, filename)
     return [int(part) for part in split_result if part.isdigit()]
 
@@ -135,10 +134,14 @@ with open('game_data.tsv', 'r') as tsvfile:
                     game = vzd.DoomGame()
                     game.set_doom_config_path("/home/seanm/vizdoom_config/_vizdoom.ini")
                     game.load_config("/home/seanm/.local/lib/python3.10/site-packages/vizdoom/scenarios/experiment.cfg")
-                    game.set_window_visible(False)
+                    game.set_window_visible(True)
+                    # Set screen size
+                    game.set_screen_resolution(vzd.ScreenResolution.RES_1280X960)
+                    # If the hud (available ammo, health, etc.) is visible
+                    game.set_render_hud(False)
                     game.set_objects_info_enabled(True)
                     game.set_sectors_info_enabled(True)
-                    game.set_mode(vzd.Mode.ASYNC_SPECTATOR)
+                    game.set_mode(vzd.Mode.ASYNC_SPECTATOR) 
                     game.set_ticrate(ticrate_basic)
                     game.init()
 
@@ -167,7 +170,7 @@ with open('game_data.tsv', 'r') as tsvfile:
                         last_action = game.get_last_action()
                         reward = game.get_last_reward()
                         last_action_trnsl = translate_action(last_action)
-
+                        print(f"Tics: {game.get_episode_time()}")
                         cumulative_reward += reward
                         current_time = game.get_episode_time() * (1 / ticrate_basic)
                         object_ids = []
@@ -192,8 +195,7 @@ with open('game_data.tsv', 'r') as tsvfile:
                             variation, 
                             movement_type,
                             game.get_episode_time(), 
-                            current_time, 
-                            last_action_trnsl,
+                            current_time, last_action_trnsl,
                             game.get_game_variable(vzd.GameVariable.POSITION_X),
                             game.get_game_variable(vzd.GameVariable.POSITION_Y),
                             game.get_game_variable(vzd.GameVariable.POSITION_Z),
@@ -215,6 +217,7 @@ with open('game_data.tsv', 'r') as tsvfile:
                                 row.extend([None, None, None, None, None])
                             
                         csv_writer.writerow(row)
+                        time.sleep(0.001) #trying little sleeps between steps to solve inaccuracy
                     
                     # write the header lines aka the column names
                     with open('column_data.tsv','w',newline='') as header_file:

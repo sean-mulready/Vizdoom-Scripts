@@ -1,6 +1,0 @@
-"Participant"	"Block"	"Episode"	"First_Action"	"first_non_na_index"	"Movement"	"Movement_Words"	"Balance"	"X0_y"	"side"	"correct_key"	"optimal_key"	"Tic"	"Time_of_Action"	"Time_of_Episode"
-2	2	1	"MOVE_RIGHT"	24	1	"inverted"	0	-184.388977050781	"right"	"incorrect"	FALSE	39	0.78	1.54
-2	2	2	"MOVE_RIGHT"	22	1	"inverted"	0	101.948608398438	"left"	"correct"	FALSE	37	0.74	1.72
-2	2	3	"MOVE_LEFT"	32	1	"inverted"	0	-186.381317138672	"right"	"correct"	TRUE	47	0.94	2.6
-2	2	4	"MOVE_RIGHT"	23	1	"inverted"	0	-18.2106170654297	"right"	"incorrect"	FALSE	38	0.76	1.16
-2	2	5	"MOVE_LEFT"	21	0	"normal"	0	151.283203125	"left"	"correct"	TRUE	36	0.72	1.18
