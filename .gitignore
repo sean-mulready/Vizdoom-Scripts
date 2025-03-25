@@ -1,9 +1,9 @@
 *.csv
 *.txt
 *.lmp
-
 *.tsv
-
-
+*.pdf
+*.pptx
+*Zone.Identifier
 data/
 sub*/
