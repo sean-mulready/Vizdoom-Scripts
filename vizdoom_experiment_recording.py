@@ -14,7 +14,7 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '141'           # ongoing numerizing as string
+sub_num = '156'           # ongoing numerizing as string
 age = 23                # Age as Integer in years
 sex = 'o'               # sex as string (m = male, f=female, o = other)
 handedness = 'left'     # handedness as left or right (string)
@@ -25,8 +25,8 @@ glasses = False          # as boolean
 ep_basic = 50 # number of episodes = number of trials
 episode_maxtime = 6 # in seconds, always add one second as the spawning is delayed!
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
-block_num = 6 #number of blocks
-#variation = 1 # variation options: 1 or 2 
+block_num = 10 #number of blocks
+training_ep = 10 # number of episodes per movement training
 target_name = "Bullseye" #enter the Target Actors name like Bullseye, DoomImp, Cacodemon, etc
 
 ########################################################################################################################################
@@ -160,7 +160,7 @@ def present_text(window_instance,
     elif block_start:
         event.waitKeys(maxWait = 60, keyList=[continue_key]) #block starts latest after 1 min
     else:
-        core.wait(0.01)
+        None
 
 
 
@@ -260,8 +260,6 @@ present_text(window_instance = win,
              )
 
 #training blocks
-
-training_ep = 10
 
 #normal movement
 
@@ -533,12 +531,14 @@ for instruction_key, instruction_data in instructions_basic_2.items():
                      continue_key=continue_key,
                      image_size=image_size,  # Pass image size to present_text function
                      )
-        
+
+win.close()
+#### TAKING THIS OUT TO SEE IF THERES ONLY ONE BACKGROUND
 # a blank black screen for the background. 
-present_text(window_instance = win,
-             instr_text= '',
-             instructions = False
-             )
+#present_text(window_instance = win,
+             #instr_text= '',
+             #instructions = False
+             #)
 
 
 # deciding the movement probabilities
@@ -842,5 +842,4 @@ present_text(window_instance=win,
 
 win.close()
 
-game.close()
 
