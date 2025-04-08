@@ -100,6 +100,8 @@ def process_data(needed_data):
     )
     return processed_data
 
+all_subjects_combined = []
+
 # Process each subject
 for subject in sub_list:
     subject_folder = os.path.join(root_dir, f"sub_{subject}")
@@ -151,3 +153,72 @@ for subject in sub_list:
     combined_data.to_csv(output_file, sep="\t", index=False)
     
     print(f"Processed data saved for Subject {subject}: {output_file}")
+
+    all_subjects_combined.append(combined_data)
+
+# Combine all subjects' data into one file
+if all_subjects_combined:
+    grand_combined_data = pd.concat(all_subjects_combined, ignore_index=True)
+    grand_combined_data = grand_combined_data.sort_values(by=["Subject", "Block", "Episode"]).reset_index(drop=True)
+    
+    final_output_file = os.path.join(root_dir, "all_subjects_combined.tsv")
+    grand_combined_data.to_csv(final_output_file, sep="\t", index=False)
+    print(f"All subject data combined into one file: {final_output_file}")
+
+# Calculate the movement ratios for each Variation as in the R script
+ratio_statistics = grand_combined_data.groupby("Variation").apply(lambda df: pd.Series({
+    "normal_right": ((df["Side"] == "right") & (df["Movement"] == 0)).sum() / len(df),
+    "inverted_right": ((df["Side"] == "right") & (df["Movement"] == 1)).sum() / len(df),
+    "normal_left": ((df["Side"] == "left") & (df["Movement"] == 0)).sum() / len(df),
+    "inverted_left": ((df["Side"] == "left") & (df["Movement"] == 1)).sum() / len(df),
+})).reset_index()
+
+print("\n✅ Ratio statistics (just like your R script):")
+print(ratio_statistics)
+
+
+
+import matplotlib.pyplot as plt
+
+# Add a trial index per block (0-based within each Subject/Block)
+grand_combined_data["Trial_Index"] = (
+    grand_combined_data
+    .groupby(["Subject", "Block"])
+    .cumcount()
+)
+
+# Group by trial index and get mean optimal choice rate
+trial_avg_optimal = (
+    grand_combined_data
+    .groupby("Trial_Index")["optimal_choice"]
+    .mean()
+)
+
+# Add a Trial counter per block so we can align episodes across blocks
+grand_combined_data["Trial"] = grand_combined_data.groupby(["Subject", "Block"]).cumcount() + 1
+
+# Now compute the average proportion of optimal choices per trial
+optimal_per_trial = (
+    grand_combined_data
+    .groupby("Trial")
+    .agg(Optimal_Proportion=("optimal_choice", "mean"))
+    .reset_index()
+)
+
+
+
+import matplotlib.pyplot as plt
+
+# Your plotting code...
+plt.figure(figsize=(12, 6))
+plt.plot(optimal_per_trial["Trial"], optimal_per_trial["Optimal_Proportion"], marker='o')
+plt.xlabel("Trial")
+plt.ylabel("Proportion of Optimal Choices")
+plt.title("Average Optimal Choices per Trial")
+
+# Fix x-axis ticks to show only integers
+plt.xticks(ticks=range(1, optimal_per_trial["Trial"].max() + 1))
+
+plt.grid(True)
+plt.tight_layout()
+plt.show()
