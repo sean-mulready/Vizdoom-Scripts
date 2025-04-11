@@ -14,11 +14,11 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '1'           # ongoing numerizing as string
-age = 23                # Age as Integer in years
-sex = 'o'               # sex as string (m = male, f=female, o = other)
-handedness = 'left'     # handedness as left or right (string)
-glasses = False          # as boolean
+sub_num = '6'           # ongoing numerizing as string
+age = 26                # Age as Integer in years
+sex = 'm'               # sex as string (m = male, f=female, o = other)
+handedness = 'right'     # handedness as left or right (string)
+glasses = True          # as boolean
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
@@ -263,8 +263,7 @@ present_text(window_instance = win,
 
 #normal movement
 
-#instructions for the normal movement here currently testing instructions
-
+#instructions for the normal movement 
 
 win = visual.Window(
         color='black',
@@ -497,7 +496,7 @@ instructions_basic_2 = {
     'basic_good_job': {'text': f'Sehr gut! Damit kann das Experiment starten !  \n\n' \
                     'LEERTASTE um fortzufahren ...'},
     'basic_probabilities': {'image': os.path.join(img_dir, "instructions_basic_movement_probabilities.jpg"), 'image_size': (1.8,1.6)},
-    'basic_note_missing_target': {'image': os.path.join(img_dir, "instructions_basic_note_missing_target.jpg"), 'image_size': (1.8,1.6)},
+    'basic_note_missing_target': {'image': os.path.join(img_dir, "instructions_basic_last_notes.jpg"), 'image_size': (1.8,1.6)},
     'basic_ep_info': {'text': f'Schießen Sie so schnell wie möglich auf das Ziel! \n' \
                       f'Sie werden {block_num} Blöcke mit je {ep_basic} Durchgängen spielen. \n' \
                       f'Sie haben ab Erscheinen des Ziels {episode_maxtime-1} Sekunden Zeit und einen Schuss pro Durchlauf \n\n' \
@@ -533,12 +532,7 @@ for instruction_key, instruction_data in instructions_basic_2.items():
                      )
 
 win.close()
-#### TAKING THIS OUT TO SEE IF THERES ONLY ONE BACKGROUND
-# a blank black screen for the background. 
-#present_text(window_instance = win,
-             #instr_text= '',
-             #instructions = False
-             #)
+
 
 
 # deciding the movement probabilities
@@ -639,8 +633,7 @@ for b in range(block_num):
     # using randomized variations
     variation = var_shuffle.pop(0)
     print(variation)
-    # implementing the array for tracking the movement type (normal or inverted)
-    movement_type_arr = np.full(ep_basic, np.nan, dtype = np.int32)
+    
     # implement Total Reward of Block:
     block_total_reward = 0 
     # Loop through episodes
@@ -739,10 +732,54 @@ for b in range(block_num):
             core.wait(1)
             win.close()
 
-        #track movement choices
-        movement_type_arr[i]= movement_type       
+               
         time.sleep(0.1)
-        
+
+        #saving metadata as game_data.tsv
+        # make sure, file exists
+        file_path = 'game_data.tsv'
+        file_exists = os.path.isfile(file_path)
+
+        # check movement type
+        if np.isnan(movement_type):
+            print(f"Warning: Episode {i+1} in Block {b+1} of {sub_num} doesn't contain valid movement-data. Metadata won't be saved.")
+        else:
+            with open(file_path, 'a', newline='') as tsvfile:
+                csv_writer = csv.writer(tsvfile, delimiter='\t')
+
+                # if file doesn't exist yet, right headers
+                if not file_exists:
+                    columns = [
+                        'sub_num',
+                        'block',
+                        'episode',
+                        'variation',
+                        'movement type',
+                        'movement type in words',
+                        'ticrate(States/second)'
+                    ]
+                    csv_writer.writerow(columns)
+
+                # translating movement
+                def movement_translation(movement_type):
+                    if movement_type == 0:
+                        return 'normal'
+                    elif movement_type == 1:
+                        return 'inverted'
+                    else:
+                        return 'Error'
+
+                row = [
+                    sub_num,
+                    (b+1),
+                    (i+1),
+                    variation,
+                    movement_type,
+                    movement_translation(movement_type),
+                    ticrate_basic
+                ]
+                csv_writer.writerow(row)
+                #print(f"Metadaten für Episode {i+1} von Block {b+1} gespeichert.")
     # buffer-episode: needed as the last episode isn't recorded
     game.new_episode()
 
@@ -757,56 +794,56 @@ for b in range(block_num):
 
     #start the tsv file which stores sub_num, block, episode, variation and concrete movement choice (maybe another column in words 'normal/inverted') 
     # Check if file exists
-    file_exists = os.path.isfile('game_data.tsv')
+    #file_exists = os.path.isfile('game_data.tsv')
 
     # Open the file in append mode
-    with open('game_data.tsv', 'a', newline='') as tsvfile:
-        csv_writer = csv.writer(tsvfile, delimiter='\t')
+    #with open('game_data.tsv', 'a', newline='') as tsvfile:
+        #csv_writer = csv.writer(tsvfile, delimiter='\t')
         
         # If the file doesn't exist, write the header
-        if not file_exists:
-            columns = [
-                'sub_num',
-                'block',
-                'episode',
-                'variation',
-                'movement type',
-                'movement type in words',
-                'ticrate(States/second)'
-            ]
-            csv_writer.writerow(columns)
+        #if not file_exists:
+            #columns = [
+                #'sub_num',
+                #'block',
+                #'episode',
+                #'variation',
+                #'movement type',
+                #'movement type in words',
+                #'ticrate(States/second)'
+           # ]
+           # csv_writer.writerow(columns)
         
         # define word translation for movement_choice
-        def movement_translation(movement_type):
-            if movement_type == 0:
-                output = 'normal'
-            elif movement_type == 1:
-                output = 'inverted'
-            else:
-                output = 'Error'
+        #def movement_translation(movement_type):
+            #if movement_type == 0:
+               # output = 'normal'
+          #  elif movement_type == 1:
+             #   output = 'inverted'
+          #  else:
+             #   output = 'Error'
                 
-            return output
+           # return output
         # Add the new row of data
-        for i in range(ep_basic):
-            row = [
-                sub_num,
-                (b+1),
-                (i+1),
-                variation,
-                movement_type_arr[i],
-                movement_translation(movement_type_arr[i]),
-                ticrate_basic
+       # for i in range(ep_basic):
+            #row = [
+             #   sub_num,
+             #   (b+1),
+             #   (i+1),
+             #   variation,
+             #   movement_type_arr[i],
+             #   movement_translation(movement_type_arr[i]),
+             #   ticrate_basic
                 
                 
-            ]
+            #]
         
-            csv_writer.writerow(row)
+           # csv_writer.writerow(row)
 
         
-        # set keys to the original movement
-        game.send_game_command("bind A +left")
-        game.send_game_command("bind D +right")
-        game.close()
+    # set keys to the original movement
+    game.send_game_command("bind A +left")
+    game.send_game_command("bind D +right")
+    game.close()
 
     if b < (block_num-1):   # python starts indexing with 0, therefore minus 1, no break offering after last block
         win = visual.Window(
