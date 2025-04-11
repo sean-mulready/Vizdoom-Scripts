@@ -68,9 +68,24 @@ def hit_logic(df):
 def process_data(needed_data):
     def first_non_na(series):
         return series.dropna().iloc[0] if not series.dropna().empty else np.nan
-    
+
+    # how many episodes where recorded and replayed
+    original_counts = (
+        needed_data.groupby(["Subject", "Block", "Episode"]).size()
+        .reset_index()
+        .groupby(["Subject", "Block"])
+        .size()
+        .reset_index(name="Original_Episode_Count")
+    )
+
+    # only process valid episodes (excludes episodes where neither action nor target_pos have at least 1 value)
+    valid_episodes = needed_data.groupby("Episode").filter(
+        lambda g: g["Action"].notna().any() and g["Target_pos"].notna().any()
+    )
+
+    # processing of valid episodes
     processed_data = (
-        needed_data.groupby("Episode").apply(lambda group: pd.Series({
+        valid_episodes.groupby("Episode").apply(lambda group: pd.Series({
             "Subject": group["Subject"].iloc[0],
             "Block": group["Block"].iloc[0],
             "Episode": group["Episode"].iloc[0],
@@ -88,19 +103,30 @@ def process_data(needed_data):
             "Side": target_side(first_non_na(group["Target_pos"])),
             "correct_choice": correct_choice(target_side(first_non_na(group["Target_pos"])), first_non_na(group["Action"])),
             "optimal_choice": optimal_choice(
-                group["Variation"].iloc[0], 
-                group["Movement"].iloc[0], 
+                group["Variation"].iloc[0],
+                group["Movement"].iloc[0],
                 first_non_na(group["Action"])
             ),
-            "Time_of_Action": group.loc[group["Action"].first_valid_index(), "Time"], 
+            "Time_of_Action": group.loc[group["Action"].first_valid_index(), "Time"],
             "Time_of_Episode": group["Time"].max(),
-            "Hit": hit_logic(group)  # Check Reward instead of Target_name
+            "Hit": hit_logic(group)
         }))
         .reset_index(drop=True)
     )
-    return processed_data
+
+    # counts valid episodes
+    valid_counts = processed_data.groupby(["Subject", "Block"]).size().reset_index(name="Valid_Episode_Count")
+
+    # merging
+    overview = pd.merge(original_counts, valid_counts, on=["Subject", "Block"], how="left").fillna(0)
+    overview["Valid_Episode_Count"] = overview["Valid_Episode_Count"].astype(int)
+    overview["Excluded_Episodes"] = overview["Original_Episode_Count"] - overview["Valid_Episode_Count"]
+
+    return processed_data, overview
+
 
 all_subjects_combined = []
+all_overviews = []  # episodecount
 
 # Process each subject
 for subject in sub_list:
@@ -113,6 +139,7 @@ for subject in sub_list:
 
     # Create a container to hold processed blocks for each subject
     all_processed_data = []
+     
     
     for file in os.listdir(subject_folder):
         if file.endswith(".tsv"):
@@ -140,8 +167,9 @@ for subject in sub_list:
 
             # Process each block and store in the all_processed_data container
             for block, block_df in df.groupby("Block"):
-                processed_block_data = process_data(block_df)  # This is your data processing function
+                processed_block_data, overview_df = process_data(block_df)  # This is your data processing function
                 all_processed_data.append(processed_block_data)
+                all_overviews.append(overview_df)
             
     # After processing all blocks for the subject, combine the results
     combined_data = pd.concat(all_processed_data, ignore_index=True)
@@ -165,6 +193,14 @@ if all_subjects_combined:
     grand_combined_data.to_csv(final_output_file, sep="\t", index=False)
     print(f"All subject data combined into one file: {final_output_file}")
 
+# Combine overview over all Subjects and Blocks
+if all_overviews:
+    combined_overview = pd.concat(all_overviews, ignore_index=True)
+    combined_overview = combined_overview.sort_values(by=["Subject", "Block"]).reset_index(drop=True)
+
+    print("\n📊 Episodecount pro Subject & Block:")
+    print(combined_overview)
+
 # Calculate the movement ratios for each Variation as in the R script
 ratio_statistics = grand_combined_data.groupby("Variation").apply(lambda df: pd.Series({
     "normal_right": ((df["Side"] == "right") & (df["Movement"] == 0)).sum() / len(df),
@@ -173,8 +209,15 @@ ratio_statistics = grand_combined_data.groupby("Variation").apply(lambda df: pd.
     "inverted_left": ((df["Side"] == "left") & (df["Movement"] == 1)).sum() / len(df),
 })).reset_index()
 
-print("\n✅ Ratio statistics (just like your R script):")
+print("\n✅ Ratio statistics:")
 print(ratio_statistics)
+
+# save ratio-statistics and episode-overview in one file
+
+#  axis=1 for horizontal merge
+combined_data = pd.concat([combined_overview, ratio_statistics], axis=1)
+
+combined_data.to_csv("combined_statistics_overview.tsv", sep="\t", index=False)
 
 
 
@@ -195,7 +238,8 @@ trial_avg_optimal = (
 )
 
 # Add a Trial counter per block so we can align episodes across blocks
-grand_combined_data["Trial"] = grand_combined_data.groupby(["Subject", "Block"]).cumcount() + 1
+grand_combined_data["Trial"] = grand_combined_data["Episode"]
+
 
 # Now compute the average proportion of optimal choices per trial
 optimal_per_trial = (
@@ -221,4 +265,28 @@ plt.xticks(ticks=range(1, optimal_per_trial["Trial"].max() + 1))
 
 plt.grid(True)
 plt.tight_layout()
-plt.show()
+plt.savefig("Average_optimal_choices_by_trial.pdf", dpi=300)
+plt.close()
+
+
+
+
+
+# Count datapoints per trial
+trial_counts = grand_combined_data.groupby("Trial").size().reset_index(name="Count")
+
+# Plot with matplotlib
+plt.figure(figsize=(12, 6))
+plt.bar(trial_counts["Trial"], trial_counts["Count"], color="steelblue")
+plt.title("Number of Data Points per Trial (Episode)")
+plt.xlabel("Trial (Episode Number)")
+plt.ylabel("Number of Data Points")
+plt.xticks(trial_counts["Trial"], rotation=90)
+plt.tight_layout()
+plt.savefig("datapoints_per_trial.pdf", dpi=300)
+plt.close()
+
+
+
+
+#print(trial_counts.to_string(index=False))
