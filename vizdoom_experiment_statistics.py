@@ -251,7 +251,6 @@ optimal_per_trial = (
 
 
 
-import matplotlib.pyplot as plt
 
 # Your plotting code...
 plt.figure(figsize=(12, 6))
@@ -269,6 +268,64 @@ plt.savefig("Average_optimal_choices_by_trial.pdf", dpi=300)
 plt.close()
 
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Compute subject-level proportions
+subject_trial_optimal = (
+    grand_combined_data
+    .groupby(["Subject", "Trial"])
+    .agg(
+        Optimal_Count=("optimal_choice", "sum"),
+        Trial_Count=("optimal_choice", "count")
+    )
+    .reset_index()
+)
+
+subject_trial_optimal["Optimal_Proportion"] = (
+    subject_trial_optimal["Optimal_Count"] / subject_trial_optimal["Trial_Count"]
+)
+
+# Compute trial-level means (already in your code)
+optimal_per_trial = (
+    grand_combined_data
+    .groupby("Trial")
+    .agg(Optimal_Proportion=("optimal_choice", "mean"))
+    .reset_index()
+)
+
+# Set up plot
+plt.figure(figsize=(12, 6))
+
+# Plot subject dots with manual jitter
+np.random.seed(0)  # for reproducibility
+jitter_strength = 0.15
+
+for _, row in subject_trial_optimal.iterrows():
+    x = row["Trial"] + np.random.uniform(-jitter_strength, jitter_strength)
+    y = row["Optimal_Proportion"]
+    plt.plot(x, y, 'o', color='gray', alpha=0.5, markersize=5)
+
+# Plot average line
+plt.plot(
+    optimal_per_trial["Trial"],
+    optimal_per_trial["Optimal_Proportion"],
+    marker='o',
+    color="blue",
+    label="Mean Optimal Choice",
+    zorder=2
+)
+
+# Final touches
+plt.xlabel("Trial")
+plt.ylabel("Proportion of Optimal Choices")
+plt.title("Average Optimal Choices per Trial (with Subject Data)")
+plt.xticks(ticks=range(1, optimal_per_trial["Trial"].max() + 1))
+plt.grid(True)
+plt.tight_layout()
+plt.legend()
+plt.savefig("Average_optimal_choices_by_trial_with_subjects_matplotlib.pdf", dpi=300)
+plt.close()
 
 
 
