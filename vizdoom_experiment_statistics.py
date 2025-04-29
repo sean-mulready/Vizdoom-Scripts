@@ -60,7 +60,7 @@ def optimal_choice(variation, movement, first_action):
         return False
 
 def hit_logic(df):
-    # Check if Reward is 1.0 at any point in the episode
+    # Check if Reward is 1 at any point in the episode as indicator that target has been hit
     if "Reward" in df.columns:
         return df["Reward"].eq(1.0).any()
     return False
@@ -167,7 +167,7 @@ for subject in sub_list:
 
             # Process each block and store in the all_processed_data container
             for block, block_df in df.groupby("Block"):
-                processed_block_data, overview_df = process_data(block_df)  # This is your data processing function
+                processed_block_data, overview_df = process_data(block_df)  
                 all_processed_data.append(processed_block_data)
                 all_overviews.append(overview_df)
             
@@ -201,7 +201,7 @@ if all_overviews:
     print("\n📊 Episodecount pro Subject & Block:")
     print(combined_overview)
 
-# Calculate the movement ratios for each Variation as in the R script
+# Calculate the movement ratios for each variation to check if there was an overall ratio of .8/.2 
 ratio_statistics = grand_combined_data.groupby("Variation").apply(lambda df: pd.Series({
     "normal_right": ((df["Side"] == "right") & (df["Movement"] == 0)).sum() / len(df),
     "inverted_right": ((df["Side"] == "right") & (df["Movement"] == 1)).sum() / len(df),
@@ -252,7 +252,7 @@ optimal_per_trial = (
 
 
 
-# Your plotting code...
+# plotting
 plt.figure(figsize=(12, 6))
 plt.plot(optimal_per_trial["Trial"], optimal_per_trial["Optimal_Proportion"], marker='o')
 plt.xlabel("Trial")
@@ -294,6 +294,7 @@ optimal_per_trial = (
     .reset_index()
 )
 
+
 # Set up plot
 plt.figure(figsize=(12, 6))
 
@@ -304,7 +305,7 @@ jitter_strength = 0.15
 for _, row in subject_trial_optimal.iterrows():
     x = row["Trial"] + np.random.uniform(-jitter_strength, jitter_strength)
     y = row["Optimal_Proportion"]
-    plt.plot(x, y, 'o', color='gray', alpha=0.5, markersize=5)
+    plt.plot(x, y, 'o', markerfacecolor=None,markeredgecolor='black', alpha=0.5, markersize=3)
 
 # Plot average line
 plt.plot(
@@ -346,4 +347,44 @@ plt.close()
 
 
 
-#print(trial_counts.to_string(index=False))
+
+# Count total and optimal per movement type
+movement_group = grand_combined_data.groupby("Movement_Words")["optimal_choice"].agg(
+    total='count', optimal='sum'
+).reset_index()
+
+# Calculate proportion
+movement_group["optimal_rate"] = movement_group["optimal"] / movement_group["total"]
+
+# Plot
+plt.figure(figsize=(6, 5))
+plt.bar(movement_group["Movement_Words"], movement_group["optimal_rate"], color=["skyblue", "salmon"])
+plt.xlabel("Movement Type")
+plt.ylabel("Proportion of Optimal Choices")
+plt.title("Optimal Choice Rate by Movement Type")
+plt.ylim(0, 1)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.savefig("Optimal_choice_by_movement_type.pdf", dpi=300)
+plt.close()
+
+# Count total and optimal per block
+block_group = grand_combined_data.groupby("Block")["optimal_choice"].agg(
+    total='count', optimal='sum'
+).reset_index()
+
+# Calculate proportion
+block_group["optimal_rate"] = block_group["optimal"] / block_group["total"]
+
+# Plot
+plt.figure(figsize=(8, 5))
+plt.bar(block_group["Block"], block_group["optimal_rate"], color="mediumseagreen")
+plt.xlabel("Block")
+plt.ylabel("Proportion of Optimal Choices")
+plt.title("Optimal Choice Rate by Block")
+plt.ylim(0, 1)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.tight_layout()
+plt.savefig("Optimal_choice_by_block.pdf", dpi=300)
+plt.close()
+
