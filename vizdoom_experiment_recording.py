@@ -14,7 +14,7 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '6'           # ongoing numerizing as string
+sub_num = '7'           # ongoing numerizing as string
 age = 26                # Age as Integer in years
 sex = 'm'               # sex as string (m = male, f=female, o = other)
 handedness = 'right'     # handedness as left or right (string)
@@ -347,6 +347,15 @@ for i in range(training_ep):
         state = game.get_state()
         game.advance_action()
 
+        # observing action and time
+        last_action = game.get_last_action()
+        current_time = game.get_episode_time()  # Get current episode time in tics
+
+        # for the case that target is missed, episode ends latest 0.5 seconds after shooting
+        if last_action == [0.0,0.0,1.0]:
+            missed_shot = current_time + 25 # set the new time to 25 tics after shooting
+            game.set_episode_timeout(missed_shot)
+
     print("Episode finished!")
     print("Total reward:", game.get_total_reward())
     print("************************")
@@ -465,6 +474,15 @@ for i in range(training_ep):
 
         state = game.get_state()
         game.advance_action()
+
+        # observing action and time
+        last_action = game.get_last_action()
+        current_time = game.get_episode_time()  # Get current episode time in tics
+
+        # for the case that target is missed, episode ends latest 0.5 seconds after shooting
+        if last_action == [0.0,0.0,1.0]:
+            missed_shot = current_time + 25 # set the new time to 25 tics after shooting
+            game.set_episode_timeout(missed_shot)
                 
     print("Episode finished!")
     print("Total reward:", game.get_total_reward())
@@ -792,52 +810,7 @@ for b in range(block_num):
     
     
 
-    #start the tsv file which stores sub_num, block, episode, variation and concrete movement choice (maybe another column in words 'normal/inverted') 
-    # Check if file exists
-    #file_exists = os.path.isfile('game_data.tsv')
-
-    # Open the file in append mode
-    #with open('game_data.tsv', 'a', newline='') as tsvfile:
-        #csv_writer = csv.writer(tsvfile, delimiter='\t')
-        
-        # If the file doesn't exist, write the header
-        #if not file_exists:
-            #columns = [
-                #'sub_num',
-                #'block',
-                #'episode',
-                #'variation',
-                #'movement type',
-                #'movement type in words',
-                #'ticrate(States/second)'
-           # ]
-           # csv_writer.writerow(columns)
-        
-        # define word translation for movement_choice
-        #def movement_translation(movement_type):
-            #if movement_type == 0:
-               # output = 'normal'
-          #  elif movement_type == 1:
-             #   output = 'inverted'
-          #  else:
-             #   output = 'Error'
-                
-           # return output
-        # Add the new row of data
-       # for i in range(ep_basic):
-            #row = [
-             #   sub_num,
-             #   (b+1),
-             #   (i+1),
-             #   variation,
-             #   movement_type_arr[i],
-             #   movement_translation(movement_type_arr[i]),
-             #   ticrate_basic
-                
-                
-            #]
-        
-           # csv_writer.writerow(row)
+    
 
         
     # set keys to the original movement
