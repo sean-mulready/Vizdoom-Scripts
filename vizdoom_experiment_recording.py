@@ -14,11 +14,12 @@ from psychopy import core, visual, event
 ##################################### TO FILL OUT BEFORE STARTING THE EXPERIMENT! ######################################################
 ########################################################################################################################################
 # Enter Subject Data
-sub_num = '7'           # ongoing numerizing as string
-age = 26                # Age as Integer in years
-sex = 'm'               # sex as string (m = male, f=female, o = other)
-handedness = 'right'     # handedness as left or right (string)
-glasses = True          # as boolean
+sub_num = '8'                       # ongoing numerizing as string
+age = 26                            # Age as Integer in years
+sex = 'm'                           # sex as string (m = male, f=female, o = other)
+handedness = 'right'                # handedness as left or right (string)
+eyesight_correction = True          # as boolean
+exp_sequence = 'viz-gab-sym'        # permutation of experiments, ViZDoom = viz, Gabor Patch Discrimination = gab, Symmetric Bandit Task = sym, as string
 
 
 # Enter experiment configurations (episodes and ticrate = speed and time-resolution)
@@ -26,7 +27,7 @@ ep_basic = 5 # number of episodes = number of trials
 episode_maxtime = 6 # in seconds, always add one second as the spawning is delayed!
 ticrate_basic = 50 #number of tics('state-loops') per second, default is 35
 block_num = 6 #number of blocks
-training_ep = 10 # number of episodes per movement training
+training_ep = 2 # number of episodes per movement training
 target_name = "Bullseye" #enter the Target Actors name like Bullseye, DoomImp, Cacodemon, etc
 
 ########################################################################################################################################
@@ -78,7 +79,8 @@ else:
                 'age',
                 'sex',
                 'handedness',
-                'glasses'
+                'eyesight correction',
+                'sequence of experiments'
             ]
             csv_writer.writerow(columns)
         
@@ -88,7 +90,8 @@ else:
             age,
             sex,
             handedness,
-            glasses
+            eyesight_correction,
+            exp_sequence
         ]
         
         csv_writer.writerow(row)
