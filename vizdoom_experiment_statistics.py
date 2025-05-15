@@ -388,3 +388,35 @@ plt.tight_layout()
 plt.savefig("Optimal_choice_by_block.pdf", dpi=300)
 plt.close()
 
+
+
+
+# Set up figure and axes: 2 rows x 3 columns
+fig, axes = plt.subplots(2, 3, figsize=(18, 10), sharey=True)
+
+# Flatten axes array for easy iteration
+axes = axes.flatten()
+
+# Loop through blocks and create a plot per block
+for i, block in enumerate(sorted(grand_combined_data["Block"].unique())):
+    ax = axes[i]
+    
+    # Filter data for this block
+    block_data = grand_combined_data[grand_combined_data["Block"] == block]
+    
+    # Group by trial and compute mean proportion of optimal choice
+    optimal_per_trial_block = block_data.groupby("Trial")["optimal_choice"].mean().reset_index()
+    
+    # Plot
+    ax.plot(optimal_per_trial_block["Trial"], optimal_per_trial_block["optimal_choice"], marker='o')
+    ax.set_title(f"Block {block}")
+    ax.set_xlabel("Trial")
+    ax.set_ylabel("Proportion Optimal")
+    ax.set_xticks(range(1, optimal_per_trial_block["Trial"].max() + 1))
+    ax.grid(True)
+
+# Adjust layout and save
+plt.suptitle("Average Optimal Choices per Trial by Block", fontsize=16)
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Leave space for suptitle
+plt.savefig("Average_optimal_choices_by_trial_by_block.pdf", dpi=300)
+plt.close()
