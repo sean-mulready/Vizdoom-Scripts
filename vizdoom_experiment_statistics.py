@@ -175,6 +175,21 @@ for subject in sub_list:
     combined_data = pd.concat(all_processed_data, ignore_index=True)
     combined_data = combined_data.sort_values(by=["Block", "Episode"]).reset_index(drop=True)
 
+    # Determine group based on "sequence for experiments"
+    seq_value = sub_data.loc[sub_data["sub_num"] == subject, "sequence of experiments"].values
+    if len(seq_value) == 0:
+        seq_group = "unknown"
+    else:
+        seq_value = seq_value[0]
+        if seq_value in ["viz-gab-sym", "viz-sym-gab", "gab-viz-sym"]:
+            seq_group = "viz_first"
+        else:
+            seq_group = "sym_first"
+
+    # Add new column to combined_data
+    combined_data["seq_group"] = seq_group
+
+
 
     # Save the combined data to a single output file for this subject
     output_file = os.path.join(processed_folder, f"processed_data_subject_{subject}.tsv")
@@ -420,3 +435,70 @@ plt.suptitle("Average Optimal Choices per Trial by Block", fontsize=16)
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Leave space for suptitle
 plt.savefig("Average_optimal_choices_by_trial_by_block.pdf", dpi=300)
 plt.close()
+
+
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Ensure seq_group is in your data
+assert "seq_group" in grand_combined_data.columns, "Missing 'seq_group' in data."
+
+# Loop over each seq_group
+for group_name, group_df in grand_combined_data.groupby("seq_group"):
+    # Compute subject-level proportions
+    subject_trial_optimal = (
+        group_df
+        .groupby(["Subject", "Trial"])
+        .agg(
+            Optimal_Count=("optimal_choice", "sum"),
+            Trial_Count=("optimal_choice", "count")
+        )
+        .reset_index()
+    )
+
+    subject_trial_optimal["Optimal_Proportion"] = (
+        subject_trial_optimal["Optimal_Count"] / subject_trial_optimal["Trial_Count"]
+    )
+
+    # Compute trial-level means
+    optimal_per_trial = (
+        group_df
+        .groupby("Trial")
+        .agg(Optimal_Proportion=("optimal_choice", "mean"))
+        .reset_index()
+    )
+
+    # Plot setup
+    plt.figure(figsize=(12, 6))
+    np.random.seed(0)
+    jitter_strength = 0.15
+
+    for _, row in subject_trial_optimal.iterrows():
+        x = row["Trial"] + np.random.uniform(-jitter_strength, jitter_strength)
+        y = row["Optimal_Proportion"]
+        plt.plot(x, y, 'o', markerfacecolor=None, markeredgecolor='black', alpha=0.5, markersize=3)
+
+    plt.plot(
+        optimal_per_trial["Trial"],
+        optimal_per_trial["Optimal_Proportion"],
+        marker='o',
+        color="blue",
+        label="Mean Optimal Choice",
+        zorder=2
+    )
+
+    # Final touches
+    plt.xlabel("Trial")
+    plt.ylabel("Proportion of Optimal Choices")
+    plt.title(f"Average Optimal Choices per Trial ({group_name})")
+    plt.xticks(ticks=range(1, optimal_per_trial["Trial"].max() + 1))
+    plt.grid(True)
+    plt.tight_layout()
+    plt.legend()
+
+    # Save to file
+    filename = f"Average_optimal_choices_by_trial_{group_name}_matplotlib.pdf"
+    plt.savefig(filename, dpi=300)
+    plt.close()
+    print(f"Saved plot: {filename}")
